@@ -20,3 +20,16 @@ from app.modules.rbac.models import (  # noqa: F401
     UserRole,
 )
 from app.modules.auth.models import AuthSession  # noqa: F401
+
+# ---- Phase 3: Master Data ----
+from app.modules.partners.models import Partner  # noqa: F401
+from app.modules.items.models import (  # noqa: F401
+    Item,
+    ItemCategory,
+    Unit,
+)
+from app.modules.inventory.models import (  # noqa: F401
+    InventoryMovement,
+    Warehouse,
+    WarehouseStock,
+)

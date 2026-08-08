@@ -26,6 +26,19 @@ DEFAULT_PERMISSIONS: list[PermissionDef] = [
     PermissionDef("roles.view", "View roles"),
     PermissionDef("roles.manage", "Create/update roles and their permissions"),
     PermissionDef("permissions.view", "View the permission catalog"),
+    # ---- Phase 3 master data ----
+    PermissionDef("partners.view", "View partners (customers/suppliers)"),
+    PermissionDef("partners.manage", "Create/update/delete partners"),
+    PermissionDef("categories.view", "View item categories"),
+    PermissionDef("categories.manage", "Create/update/delete item categories"),
+    PermissionDef("units.view", "View units of measure"),
+    PermissionDef("units.manage", "Create/update/delete units of measure"),
+    PermissionDef("items.view", "View items"),
+    PermissionDef("items.manage", "Create/update/delete items"),
+    PermissionDef("warehouses.view", "View warehouses"),
+    PermissionDef("warehouses.manage", "Create/update/delete warehouses"),
+    PermissionDef("stock.view", "View warehouse stock levels"),
+    PermissionDef("movements.view", "View inventory movements"),
 ]
 
 # All known permission codes (used to grant the Admin role everything).

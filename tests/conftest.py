@@ -136,3 +136,15 @@ def seeded_no_perms(db_session):
     return _seed_company_admin(
         db_session, code="NOPERM", email="noperm@test.com", grant_perms=False
     )
+
+
+@pytest.fixture()
+def seeded_other(db_session):
+    """A second, independent company + fully-permissioned admin.
+
+    Used to prove company isolation: this user must never see or touch the
+    first company's data even though they hold every permission.
+    """
+    return _seed_company_admin(
+        db_session, code="OTHER", email="admin@other.com", grant_perms=True
+    )
