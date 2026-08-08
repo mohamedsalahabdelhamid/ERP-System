@@ -14,12 +14,17 @@ from app.modules.auth.dependencies import get_current_company_id, get_current_us
 from app.modules.companies import service as company_service
 from app.modules.companies.models import Company
 from app.modules.companies.schemas import CompanyRead
+from app.modules.rbac.dependencies import require_permission
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
 
-@router.get("", response_model=list[CompanyRead])
+@router.get(
+    "",
+    response_model=list[CompanyRead],
+    dependencies=[Depends(require_permission("companies.view"))],
+)
 def list_my_companies(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -27,7 +32,11 @@ def list_my_companies(
     return company_service.get_user_companies(db, user.id)
 
 
-@router.get("/current", response_model=CompanyRead)
+@router.get(
+    "/current",
+    response_model=CompanyRead,
+    dependencies=[Depends(require_permission("companies.view"))],
+)
 def get_current_company(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),

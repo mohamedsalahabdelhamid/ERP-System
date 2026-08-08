@@ -13,6 +13,7 @@ from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.modules.companies.models import Branch, Company, CompanySettings
 from app.modules.rbac.models import Role, UserRole
+from app.modules.rbac.seed import grant_all_to_role, sync_permissions
 from app.modules.users.models import User
 
 DEMO_COMPANY_CODE = "DEMO"
@@ -106,6 +107,11 @@ def seed() -> None:
                     role_id=role.id,
                 )
             )
+
+        # --- Permissions catalog + grant everything to the Admin role ---
+        sync_permissions(db)
+        db.flush()
+        grant_all_to_role(db, role)
 
         db.commit()
         print(

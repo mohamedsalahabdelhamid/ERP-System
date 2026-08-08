@@ -17,6 +17,7 @@ from app.db.session import get_db
 from app.main import app
 from app.modules.companies.models import Branch, Company, CompanySettings
 from app.modules.rbac.models import Role, UserRole
+from app.modules.rbac.seed import grant_all_to_role, sync_permissions
 from app.modules.users.models import User
 
 
@@ -53,12 +54,15 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture()
-def seeded(db_session):
-    """Create a company + branch + admin user with a role. Returns key ids."""
+def _seed_company_admin(db_session, code, email, grant_perms):
+    """Create a company + branch + admin user with a role. Returns key ids.
+
+    When ``grant_perms`` is True the Admin role is granted every permission,
+    mirroring ``scripts/seed.py`` (the demo admin has full access).
+    """
     company = Company(
-        name="Test Co",
-        code="TEST",
+        name=f"{code} Co",
+        code=code,
         base_currency="EGP",
         activity_type="trading",
         is_active=True,
@@ -84,7 +88,7 @@ def seeded(db_session):
     db_session.flush()
 
     user = User(
-        email="admin@test.com",
+        email=email,
         password_hash=hash_password("secret123"),
         full_name="Admin",
         is_active=True,
@@ -100,12 +104,35 @@ def seeded(db_session):
             role_id=role.id,
         )
     )
+
+    if grant_perms:
+        sync_permissions(db_session)
+        db_session.flush()
+        grant_all_to_role(db_session, role)
+
     db_session.commit()
 
     return {
         "company_id": company.id,
         "branch_id": branch.id,
         "user_id": user.id,
-        "email": "admin@test.com",
+        "role_id": role.id,
+        "email": email,
         "password": "secret123",
     }
+
+
+@pytest.fixture()
+def seeded(db_session):
+    """Company + admin user whose Admin role has all permissions."""
+    return _seed_company_admin(
+        db_session, code="TEST", email="admin@test.com", grant_perms=True
+    )
+
+
+@pytest.fixture()
+def seeded_no_perms(db_session):
+    """Company + admin user whose role has NO permissions (403 enforcement)."""
+    return _seed_company_admin(
+        db_session, code="NOPERM", email="noperm@test.com", grant_perms=False
+    )

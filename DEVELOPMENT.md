@@ -33,7 +33,11 @@ docker-compose.yml   # web, db, nginx, redis
 - **Phase 1 – Multi-Company Core & Auth: DONE** — companies/branches/settings,
   users, roles/permissions tables, token-based auth (login/logout),
   current-company selection per session, and company-scope enforcement.
-- Next: **Phase 2 – Roles & Permissions (enforcement on endpoints)**.
+- **Phase 2 – Roles & Permissions (basic enforcement): DONE** — default
+  permission catalog seeded, Admin role granted all permissions, and a
+  `require_permission("...")` dependency enforcing per-company permissions on
+  endpoints (applied to the `/companies` routes as an example).
+- Next: **Phase 3**.
 
 ## Phase 1 endpoints
 
