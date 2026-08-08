@@ -5,6 +5,7 @@ the autogenerate target. Importing ``app.db.base`` ensures every registered
 model is loaded before autogenerate inspects the metadata.
 """
 
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -14,7 +15,11 @@ from app.core.config import settings
 from app.db.base import Base  # noqa: F401  (imports all models' metadata)
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
+# Allow an override URL (e.g. for tests/CI) via ALEMBIC_DATABASE_URL; otherwise
+# use the application settings (PostgreSQL).
+_db_url = os.getenv("ALEMBIC_DATABASE_URL", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", _db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -25,7 +30,7 @@ target_metadata = Base.metadata
 def run_migrations_offline() -> None:
     """Run migrations without a DB connection (emits SQL)."""
     context.configure(
-        url=settings.DATABASE_URL,
+        url=_db_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},

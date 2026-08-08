@@ -5,6 +5,7 @@ uvicorn[standard]==0.34.0
 # ---- Configuration ----
 pydantic==2.10.4
 pydantic-settings==2.7.1
+email-validator==2.2.0
 
 # ---- Database (PostgreSQL + ORM + migrations) ----
 SQLAlchemy==2.0.36
@@ -13,6 +14,9 @@ alembic==1.14.0
 
 # ---- Cache / jobs ----
 redis==5.2.1
+
+# ---- Auth / security ----
+bcrypt==4.2.1
 
 # ---- Testing ----
 pytest==8.3.4

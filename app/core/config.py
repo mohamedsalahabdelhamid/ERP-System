@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me"
     API_V1_PREFIX: str = "/api/v1"
 
+    # ---- Auth ----
+    # Lifetime of an access token / session, in minutes (default: 1 day).
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
+
     # ---- PostgreSQL ----
     POSTGRES_HOST: str = "db"
     POSTGRES_PORT: int = 5432

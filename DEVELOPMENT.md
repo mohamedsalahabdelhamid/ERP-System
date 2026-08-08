@@ -30,7 +30,35 @@ docker-compose.yml   # web, db, nginx, redis
 
 - **Phase 0 – Infrastructure: DONE** — repo, Python env, Dockerfile,
   docker-compose (web/db/nginx/redis), Alembic scaffold, `/health`.
-- Next: **Phase 1 – Multi-Company Core & Auth**.
+- **Phase 1 – Multi-Company Core & Auth: DONE** — companies/branches/settings,
+  users, roles/permissions tables, token-based auth (login/logout),
+  current-company selection per session, and company-scope enforcement.
+- Next: **Phase 2 – Roles & Permissions (enforcement on endpoints)**.
+
+## Phase 1 endpoints
+
+All under the versioned prefix (e.g. `/api/v1`):
+
+| Method | Path                    | Purpose                                        |
+|--------|-------------------------|------------------------------------------------|
+| POST   | `/auth/login`           | email + password → bearer token                |
+| POST   | `/auth/logout`          | revoke current session                         |
+| POST   | `/auth/select-company`  | set active company/branch for the session      |
+| GET    | `/auth/me`              | current user, active scope, accessible companies |
+| GET    | `/companies`            | companies the user can access                  |
+| GET    | `/companies/current`    | active company (requires selection → else 409) |
+
+Auth model: opaque bearer tokens stored as SHA-256 hashes in `auth_sessions`;
+each session carries `current_company_id` / `current_branch_id`. Business
+endpoints depend on `app.api.deps.get_current_company_id` to enforce scoping.
+
+## Seed demo data
+
+```bash
+docker compose exec web python -m scripts.seed
+# Login: admin@example.com / admin123  (company code: DEMO)
+```
+
 
 ## Run locally (Docker)
 
