@@ -1,0 +1,32 @@
+# Keep the build context small and reproducible.
+.git
+.gitignore
+.dockerignore
+README.md
+*.pdf
+
+# Python caches / envs
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local env & data
+.env
+.env.*
+!.env.example
+postgres_data/
+redis_data/
+*.log
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
