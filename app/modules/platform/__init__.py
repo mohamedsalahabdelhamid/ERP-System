@@ -1,0 +1,1 @@
+"""Platform (tenant/subscription) management."""

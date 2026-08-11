@@ -61,3 +61,42 @@ class InventoryMovementRead(BaseModel):
     total_cost: float
     document_type: Optional[str]
     document_id: Optional[int]
+
+
+# ---- Stock taking & adjustments (Phase 6.3) ----
+class StockTakeLineCreate(BaseModel):
+    item_id: int
+    counted_qty: float = 0
+
+
+class StockTakeCreate(BaseModel):
+    warehouse_id: int
+    reference: str
+    note: Optional[str] = None
+    lines: list[StockTakeLineCreate] = []
+
+
+class StockTakeLineRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    stock_take_id: int
+    item_id: int
+    book_qty: float
+    counted_qty: float
+    diff_qty: float
+    unit_cost: float
+    adjustment_value: float
+
+
+class StockTakeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    company_id: int
+    warehouse_id: int
+    reference: str
+    status: str
+    created_by: int
+    posted_at: Optional[str]
+    note: Optional[str]

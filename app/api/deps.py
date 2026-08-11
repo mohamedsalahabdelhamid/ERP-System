@@ -16,6 +16,10 @@ from app.db.session import get_db  # noqa: F401
 from app.modules.auth.dependencies import (  # noqa: F401
     get_current_company_id,
     get_current_session,
+    get_current_superuser,
     get_current_user,
 )
-from app.modules.rbac.dependencies import require_permission  # noqa: F401
+from app.modules.rbac.dependencies import (  # noqa: F401
+    require_module,
+    require_permission,
+)

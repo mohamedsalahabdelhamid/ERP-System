@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERP System</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0f172a;
+      --panel-2: #111c2f;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #22c55e;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; background: linear-gradient(135deg, #07111f, #0f172a); color: var(--text); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .card { background: rgba(15,23,42,0.95); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 24px; box-shadow: 0 18px 40px rgba(0,0,0,0.25); }
+    .grid { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .btn { border: none; border-radius: 12px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
+    .btn-primary { background: var(--primary); color: #04110c; }
+    .btn-secondary { background: var(--accent); color: #03131d; }
+    .btn-danger { background: var(--danger); color: white; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #334155; background: #020617; color: white; margin-top: 6px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1d4ed8; color: white; font-size: 12px; }
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .nav a { color: var(--text); text-decoration: none; margin-left: 12px; }
+    .hidden { display: none !important; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #22304a; }
+    .hero { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: center; }
+    .stat { padding: 16px; border-radius: 16px; background: var(--panel-2); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <div><strong>ERP System</strong> <span class="pill">Production Ready</span></div>
+      <div id="navLinks">
+        <a href="#" onclick="showSection('login')">Login</a>
+        <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </div>
+
+    <section id="loginSection" class="card">
+      <div class="hero">
+        <div>
+          <h1>Modern ERP for companies, sales, purchases, inventory and finance</h1>
+          <p>Run your business from one place with a polished web experience and API-backed operations.</p>
+          <div class="row">
+            <button class="btn btn-primary" onclick="login()">Login</button>
+            <button class="btn btn-secondary" onclick="seedDemo()">Seed Demo</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Login</h3>
+          <input id="email" placeholder="Email" value="admin@example.com" />
+          <input id="password" placeholder="Password" value="admin123" />
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboardSection" class="hidden">
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Overview</h3>
+          <div class="grid grid-3" id="stats"></div>
+        </div>
+        <div class="card">
+          <h3>Quick actions</h3>
+          <div class="row">
+            <button class="btn btn-primary" onclick="loadCompanies()">Companies</button>
+            <button class="btn btn-secondary" onclick="loadPartners()">Partners</button>
+            <button class="btn btn-secondary" onclick="loadItems()">Items</button>
+            <button class="btn btn-secondary" onclick="loadInvoices()">Invoices</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <h3>Companies</h3>
+        <div id="companiesList"></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <h3>Partners</h3>
+        <div id="partnersList"></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <h3>Items</h3>
+        <div id="itemsList"></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <h3>Invoices</h3>
+        <div id="invoicesList"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const apiBase = '/api/v1';
+    let token = localStorage.getItem('token') || '';
+
+    function showSection(section) {
+      document.getElementById('loginSection').classList.toggle('hidden', section !== 'login');
+      document.getElementById('dashboardSection').classList.toggle('hidden', section !== 'dashboard');
+    }
+
+    async function api(path, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(apiBase + path, { ...options, headers });
+      const text = await res.text();
+      try { return { ok: res.ok, status: res.status, data: JSON.parse(text) }; } catch { return { ok: res.ok, status: res.status, data: text }; }
+    }
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const res = await api('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      if (res.ok) {
+        token = res.data.access_token;
+        localStorage.setItem('token', token);
+        await selectCompany();
+        showSection('dashboard');
+        await loadOverview();
+      } else {
+        alert('Login failed');
+      }
+    }
+
+    async function selectCompany() {
+      const res = await api('/auth/select-company', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company_id: 1, branch_id: 1 }) });
+      if (!res.ok) console.warn('Company selection skipped', res.data);
+    }
+
+    async function seedDemo() {
+      const res = await fetch('/api/v1/companies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Demo Company', code: 'DEMO', base_currency: 'EGP' }) });
+      if (res.ok) alert('Demo seeded'); else alert('Seed may already exist');
+    }
+
+    async function loadOverview() {
+      const [companiesRes, partnersRes, itemsRes, invoicesRes] = await Promise.all([
+        api('/companies'),
+        api('/partners'),
+        api('/items'),
+        api('/sales-invoices')
+      ]);
+      const stats = document.getElementById('stats');
+      stats.innerHTML = `
+        <div class="stat"><h4>${companiesRes.ok ? companiesRes.data.length : 0}</h4><p>Companies</p></div>
+        <div class="stat"><h4>${partnersRes.ok ? partnersRes.data.length : 0}</h4><p>Partners</p></div>
+        <div class="stat"><h4>${itemsRes.ok ? itemsRes.data.length : 0}</h4><p>Items</p></div>
+      `;
+      await loadCompanies();
+      await loadPartners();
+      await loadItems();
+      await loadInvoices();
+    }
+
+    async function loadCompanies() {
+      const res = await api('/companies');
+      document.getElementById('companiesList').innerHTML = res.ok ? renderTable(res.data, ['name','code','base_currency']) : '<p>Unable to load companies.</p>';
+    }
+
+    async function loadPartners() {
+      const res = await api('/partners');
+      document.getElementById('partnersList').innerHTML = res.ok ? renderTable(res.data, ['name','code','type']) : '<p>Unable to load partners.</p>';
+    }
+
+    async function loadItems() {
+      const res = await api('/items');
+      document.getElementById('itemsList').innerHTML = res.ok ? renderTable(res.data, ['name','code','type']) : '<p>Unable to load items.</p>';
+    }
+
+    async function loadInvoices() {
+      const res = await api('/sales-invoices');
+      document.getElementById('invoicesList').innerHTML = res.ok ? renderTable(res.data, ['number','total_amount','currency_code']) : '<p>Unable to load invoices.</p>';
+    }
+
+    function renderTable(rows, fields) {
+      if (!rows || !rows.length) return '<p>No data found.</p>';
+      const head = `<table><tr>${fields.map(f => `<th>${f}</th>`).join('')}</tr>`;
+      const body = rows.map(r => `<tr>${fields.map(f => `<td>${r[f] ?? ''}</td>`).join('')}</tr>`).join('');
+      return head + body + '</table>';
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      token = '';
+      showSection('login');
+    }
+
+    if (token) { showSection('dashboard'); loadOverview(); }
+  </script>
+</body>
+</html>

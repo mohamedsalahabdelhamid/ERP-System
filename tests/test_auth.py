@@ -96,3 +96,55 @@ def test_logout_revokes_token(client, seeded):
     assert client.get(
         f"{PREFIX}/auth/me", headers=_auth_header(token)
     ).status_code == 401
+
+
+def test_platform_creates_company_and_owner_creates_branch(client, seeded, superuser):
+    # Company creation is exclusive to the platform owner (superuser).
+    token = _login(client, superuser["email"], superuser["password"]).json()["access_token"]
+    headers = _auth_header(token)
+
+    created = client.post(
+        f"{PREFIX}/platform/companies",
+        headers=headers,
+        json={
+            "name": "New Company",
+            "code": "NEWC",
+            "subdomain": "newco",
+            "base_currency": "EGP",
+            "modules": ["sales", "purchases", "inventory"],
+            "max_users": 5,
+            "owner_email": "owner@newco.com",
+            "owner_name": "New Owner",
+            "owner_password": "Owner@2026X",
+        },
+    )
+    assert created.status_code == 201, created.text
+    company_id = created.json()["id"]
+    assert created.json()["subdomain"] == "newco"
+    assert created.json()["status"] == "active"
+
+    # A regular (non-superuser) user cannot create companies.
+    tenant_token = _login(client, seeded["email"], seeded["password"]).json()["access_token"]
+    forbidden = client.post(
+        f"{PREFIX}/companies", headers=_auth_header(tenant_token), json={"name": "X"}
+    )
+    assert forbidden.status_code == 405  # endpoint no longer exists for tenants
+
+    # The new owner logs in, selects the company and creates a branch.
+    owner_login = _login(client, "owner@newco.com", "Owner@2026X")
+    assert owner_login.status_code == 200
+    owner_headers = _auth_header(owner_login.json()["access_token"])
+    sel = client.post(
+        f"{PREFIX}/auth/select-company",
+        headers=owner_headers,
+        json={"company_id": company_id, "branch_id": None},
+    )
+    assert sel.status_code == 200
+
+    branch = client.post(
+        f"{PREFIX}/companies/{company_id}/branches",
+        headers=owner_headers,
+        json={"name": "Cairo Branch", "code": "CAI"},
+    )
+    assert branch.status_code == 201
+    assert branch.json()["company_id"] == company_id

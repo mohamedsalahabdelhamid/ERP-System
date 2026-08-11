@@ -3,7 +3,10 @@
 # ============================================================
 # ERP backend image (FastAPI + Uvicorn)
 # ============================================================
-FROM python:3.12-slim AS base
+# slim-bookworm is a stable Debian base. No apt/system packages are installed:
+# every Python dependency ships a binary wheel for 3.12, so the image is fully
+# self-contained and never touches Debian mirrors at build or run time.
+FROM python:3.12-slim-bookworm AS base
 
 # Keep Python lean and predictable inside containers.
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -12,11 +15,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
-
-# System deps: build tools for any wheels + curl for the healthcheck.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential curl \
-    && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies first for better layer caching.
 COPY requirements.txt .

@@ -68,15 +68,15 @@ docker compose exec web python -m scripts.seed
 
 ```bash
 cp .env.example .env      # then edit secrets
-docker compose up --build
+./start.sh
 ```
 
 Then check:
 
-- API root:  http://localhost/            (via nginx)
-- Health:    http://localhost/health
-- Docs:      http://localhost/docs
-- Direct:    http://localhost:8000/health  (bypassing nginx, if exposed)
+- API root:  http://localhost:9000/
+- Health:    http://localhost:9000/health
+- Docs:      http://localhost:9000/docs
+- Nginx:     http://localhost:9009/
 
 `/health` returns the status of the app plus its `database` and `redis`
 dependencies.

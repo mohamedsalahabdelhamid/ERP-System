@@ -13,25 +13,45 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_company_id, get_db, require_permission
+from app.api.deps import (
+    get_current_company_id,
+    get_current_user,
+    get_db,
+    require_module,
+    require_permission,
+)
 from app.modules.inventory import service
 from app.modules.inventory.models import (
     InventoryMovement,
+    StockTake,
     Warehouse,
     WarehouseStock,
 )
 from app.modules.inventory.schemas import (
     InventoryMovementRead,
+    StockTakeCreate,
+    StockTakeRead,
     WarehouseCreate,
     WarehouseRead,
     WarehouseStockRead,
     WarehouseUpdate,
 )
 
-warehouses_router = APIRouter(prefix="/warehouses", tags=["warehouses"])
-stock_router = APIRouter(prefix="/warehouse-stock", tags=["warehouse-stock"])
+_MODULE = Depends(require_module("inventory"))
+
+warehouses_router = APIRouter(
+    prefix="/warehouses", tags=["warehouses"], dependencies=[_MODULE]
+)
+stock_router = APIRouter(
+    prefix="/warehouse-stock", tags=["warehouse-stock"], dependencies=[_MODULE]
+)
 movements_router = APIRouter(
-    prefix="/inventory-movements", tags=["inventory-movements"]
+    prefix="/inventory-movements",
+    tags=["inventory-movements"],
+    dependencies=[_MODULE],
+)
+stock_takes_router = APIRouter(
+    prefix="/stock-takes", tags=["stock-takes"], dependencies=[_MODULE]
 )
 
 
@@ -153,3 +173,66 @@ def list_movements(
     db: Session = Depends(get_db),
 ) -> list[InventoryMovement]:
     return service.list_movements(db, company_id, item_id)
+
+
+# ================================================================= stock takes
+@stock_takes_router.get(
+    "",
+    response_model=list[StockTakeRead],
+    dependencies=[Depends(require_permission("stock_takes.view"))],
+)
+def list_stock_takes(
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+) -> list[StockTake]:
+    return service.list_stock_takes(db, company_id)
+
+
+@stock_takes_router.get(
+    "/{stock_take_id}",
+    response_model=StockTakeRead,
+    dependencies=[Depends(require_permission("stock_takes.view"))],
+)
+def get_stock_take(
+    stock_take_id: int,
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+):
+    st = service.get_stock_take(db, company_id, stock_take_id)
+    if st is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stock take not found")
+    return st
+
+
+@stock_takes_router.post(
+    "",
+    response_model=StockTakeRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_permission("stock_takes.manage"))],
+)
+def create_stock_take(
+    data: StockTakeCreate,
+    user=Depends(get_current_user),
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+):
+    try:
+        return service.create_stock_take(db, company_id, user.id, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@stock_takes_router.post(
+    "/{stock_take_id}/post",
+    response_model=StockTakeRead,
+    dependencies=[Depends(require_permission("stock_takes.manage"))],
+)
+def post_stock_take(
+    stock_take_id: int,
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+):
+    try:
+        return service.post_stock_take(db, company_id, stock_take_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))

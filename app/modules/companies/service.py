@@ -38,3 +38,11 @@ def branch_belongs_to_company(db: Session, branch_id: int, company_id: int) -> b
         Branch.id == branch_id, Branch.company_id == company_id
     ).limit(1)
     return db.scalar(stmt) is not None
+
+
+def create_branch(db: Session, company_id: int, data) -> Branch:
+    branch = Branch(company_id=company_id, **data.model_dump())
+    db.add(branch)
+    db.commit()
+    db.refresh(branch)
+    return branch

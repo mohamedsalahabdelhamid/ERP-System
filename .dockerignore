@@ -24,6 +24,12 @@ htmlcov/
 postgres_data/
 redis_data/
 *.log
+app.db
+
+# Frontend is built separately (its own image / build context)
+frontend/
+node_modules/
+dist/
 
 # Editor / OS
 .idea/

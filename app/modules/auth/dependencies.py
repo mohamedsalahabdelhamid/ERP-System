@@ -55,6 +55,18 @@ def get_current_user(
     return user
 
 
+def get_current_superuser(
+    user: User = Depends(get_current_user),
+) -> User:
+    """The authenticated user must be a platform superuser (403 otherwise)."""
+    if not user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Platform owner access required.",
+        )
+    return user
+
+
 def get_current_company_id(
     session: AuthSession = Depends(get_current_session),
 ) -> int:

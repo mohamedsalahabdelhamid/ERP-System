@@ -3,7 +3,7 @@
 Tables:
   - item_categories : per-company category tree (self-referential parent_id).
   - units           : per-company units of measure (Piece, Box, Kg, ...).
-                      Unit *conversions* are added in Phase 4.
+  - unit_conversions: per-company conversion factors between units (Phase 4).
   - items           : products & services, linked to a category and units.
 
 All tables are scoped to a company.
@@ -62,6 +62,38 @@ class Unit(TimestampMixin, Base):
     symbol: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     # unit_type: weight / length / count / volume
     unit_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
+class UnitConversion(TimestampMixin, Base):
+    """Conversion factor between two units (spec 5.2), e.g. 1 box = 12 pieces.
+
+    Added in Phase 4. Both units must belong to the same company; the pair
+    (from_unit_id, to_unit_id) is unique per company.
+    """
+
+    __tablename__ = "unit_conversions"
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id",
+            "from_unit_id",
+            "to_unit_id",
+            name="uq_unit_conversions_company_from_to",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    from_unit_id: Mapped[int] = mapped_column(
+        ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+    )
+    to_unit_id: Mapped[int] = mapped_column(
+        ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+    )
+    # 1 from_unit = <factor> to_unit (e.g. 1 box = 12 pieces).
+    factor: Mapped[float] = mapped_column(Numeric(18, 8), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 

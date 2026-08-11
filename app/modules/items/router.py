@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_company_id, get_db, require_permission
 from app.modules.items import service
-from app.modules.items.models import Item, ItemCategory, Unit
+from app.modules.items.models import Item, ItemCategory, Unit, UnitConversion
 from app.modules.items.schemas import (
     ItemCategoryCreate,
     ItemCategoryRead,
@@ -19,6 +19,9 @@ from app.modules.items.schemas import (
     ItemCreate,
     ItemRead,
     ItemUpdate,
+    UnitConversionCreate,
+    UnitConversionRead,
+    UnitConversionUpdate,
     UnitCreate,
     UnitRead,
     UnitUpdate,
@@ -26,6 +29,9 @@ from app.modules.items.schemas import (
 
 categories_router = APIRouter(prefix="/item-categories", tags=["item-categories"])
 units_router = APIRouter(prefix="/units", tags=["units"])
+conversions_router = APIRouter(
+    prefix="/unit-conversions", tags=["unit-conversions"]
+)
 items_router = APIRouter(prefix="/items", tags=["items"])
 
 
@@ -216,6 +222,116 @@ def delete_unit(
 ) -> None:
     unit = _get_unit_or_404(db, company_id, unit_id)
     service.delete_unit(db, unit)
+
+
+# =========================================================== unit conversions
+def _get_conversion_or_404(
+    db: Session, company_id: int, conversion_id: int
+) -> UnitConversion:
+    conversion = service.get_conversion(db, company_id, conversion_id)
+    if conversion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Unit conversion not found.",
+        )
+    return conversion
+
+
+@conversions_router.get(
+    "",
+    response_model=list[UnitConversionRead],
+    dependencies=[Depends(require_permission("unit_conversions.view"))],
+)
+def list_conversions(
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+) -> list[UnitConversion]:
+    return service.list_conversions(db, company_id)
+
+
+@conversions_router.post(
+    "",
+    response_model=UnitConversionRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_permission("unit_conversions.manage"))],
+)
+def create_conversion(
+    data: UnitConversionCreate,
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+) -> UnitConversion:
+    error = service.invalid_conversion(db, company_id, data.model_dump())
+    if error is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=error
+        )
+    if service.conversion_pair_exists(
+        db, company_id, data.from_unit_id, data.to_unit_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A conversion for this unit pair already exists.",
+        )
+    return service.create_conversion(db, company_id, data)
+
+
+@conversions_router.get(
+    "/{conversion_id}",
+    response_model=UnitConversionRead,
+    dependencies=[Depends(require_permission("unit_conversions.view"))],
+)
+def get_conversion(
+    conversion_id: int,
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+) -> UnitConversion:
+    return _get_conversion_or_404(db, company_id, conversion_id)
+
+
+@conversions_router.patch(
+    "/{conversion_id}",
+    response_model=UnitConversionRead,
+    dependencies=[Depends(require_permission("unit_conversions.manage"))],
+)
+def update_conversion(
+    conversion_id: int,
+    data: UnitConversionUpdate,
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+) -> UnitConversion:
+    conversion = _get_conversion_or_404(db, company_id, conversion_id)
+    payload = data.model_dump(exclude_unset=True)
+    error = service.invalid_conversion(db, company_id, payload)
+    if error is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=error
+        )
+    from_id = payload.get("from_unit_id", conversion.from_unit_id)
+    to_id = payload.get("to_unit_id", conversion.to_unit_id)
+    if ("from_unit_id" in payload or "to_unit_id" in payload) and (
+        service.conversion_pair_exists(
+            db, company_id, from_id, to_id, exclude_id=conversion.id
+        )
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A conversion for this unit pair already exists.",
+        )
+    return service.update_conversion(db, conversion, data)
+
+
+@conversions_router.delete(
+    "/{conversion_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_permission("unit_conversions.manage"))],
+)
+def delete_conversion(
+    conversion_id: int,
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+) -> None:
+    conversion = _get_conversion_or_404(db, company_id, conversion_id)
+    service.delete_conversion(db, conversion)
 
 
 # ======================================================================= items

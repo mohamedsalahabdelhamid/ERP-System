@@ -97,3 +97,46 @@ class InventoryMovement(TimestampMixin, Base):
     # Link back to the source document (e.g. sales_invoice / purchase_invoice).
     document_type: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     document_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+
+class StockTake(TimestampMixin, Base):
+    """Stock taking document (spec Phase 6.3). Posted lines become adjustments."""
+
+    __tablename__ = "stock_takes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    warehouse_id: Mapped[int] = mapped_column(
+        ForeignKey("warehouses.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    reference: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="draft"
+    )  # draft / posted
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    posted_at: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    note: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+
+class StockTakeLine(TimestampMixin, Base):
+    __tablename__ = "stock_take_lines"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    stock_take_id: Mapped[int] = mapped_column(
+        ForeignKey("stock_takes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    item_id: Mapped[int] = mapped_column(
+        ForeignKey("items.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    book_qty: Mapped[float] = mapped_column(Numeric(18, 4), nullable=False, default=0)
+    counted_qty: Mapped[float] = mapped_column(
+        Numeric(18, 4), nullable=False, default=0
+    )
+    # diff_qty = counted - book; adjustment value = diff * average_cost.
+    diff_qty: Mapped[float] = mapped_column(Numeric(18, 4), nullable=False, default=0)
+    unit_cost: Mapped[float] = mapped_column(Numeric(18, 4), nullable=False, default=0)
+    adjustment_value: Mapped[float] = mapped_column(
+        Numeric(18, 4), nullable=False, default=0
+    )

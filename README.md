@@ -85,7 +85,25 @@ Once business flows are stable:
   - FX differences → FX gain/loss accounts.
 
 ---
-## 6. Implementation Roadmap (Summary)
+## 6. Production-Ready Startup
+
+Run the full stack with a single command:
+
+```bash
+./start.sh
+```
+
+This starts:
+- API on http://localhost:9000
+- Swagger docs on http://localhost:9000/docs
+- Health check on http://localhost:9000/health
+- Nginx entry on http://localhost:9009
+
+Seeded admin credentials:
+- Email: admin@example.com
+- Password: admin123
+
+## 7. Implementation Roadmap (Summary)
 
 1. **Phase 0 – Infra**: repo, Python env, Dockerfile, docker‑compose, `/health`.
 2. **Phase 1 – Multi‑Company & Auth**: users, companies, branches, company scoping.

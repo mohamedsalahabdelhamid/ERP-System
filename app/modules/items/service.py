@@ -10,12 +10,14 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.modules.items.models import Item, ItemCategory, Unit
+from app.modules.items.models import Item, ItemCategory, Unit, UnitConversion
 from app.modules.items.schemas import (
     ItemCategoryCreate,
     ItemCategoryUpdate,
     ItemCreate,
     ItemUpdate,
+    UnitConversionCreate,
+    UnitConversionUpdate,
     UnitCreate,
     UnitUpdate,
 )
@@ -114,6 +116,89 @@ def update_unit(db: Session, unit: Unit, data: UnitUpdate) -> Unit:
 
 def delete_unit(db: Session, unit: Unit) -> None:
     db.delete(unit)
+    db.commit()
+
+
+# ---------------------------------------------------------- unit conversions
+def list_conversions(db: Session, company_id: int) -> list[UnitConversion]:
+    stmt = (
+        select(UnitConversion)
+        .where(UnitConversion.company_id == company_id)
+        .order_by(UnitConversion.id)
+    )
+    return list(db.scalars(stmt).all())
+
+
+def get_conversion(
+    db: Session, company_id: int, conversion_id: int
+) -> Optional[UnitConversion]:
+    stmt = select(UnitConversion).where(
+        UnitConversion.id == conversion_id,
+        UnitConversion.company_id == company_id,
+    )
+    return db.scalar(stmt)
+
+
+def conversion_pair_exists(
+    db: Session,
+    company_id: int,
+    from_unit_id: int,
+    to_unit_id: int,
+    exclude_id: Optional[int] = None,
+) -> bool:
+    stmt = select(UnitConversion.id).where(
+        UnitConversion.company_id == company_id,
+        UnitConversion.from_unit_id == from_unit_id,
+        UnitConversion.to_unit_id == to_unit_id,
+    )
+    if exclude_id is not None:
+        stmt = stmt.where(UnitConversion.id != exclude_id)
+    return db.scalar(stmt.limit(1)) is not None
+
+
+def invalid_conversion(db: Session, company_id: int, data: dict) -> Optional[str]:
+    """Validate a (partial) unit-conversion payload; return an error or None.
+
+    Only keys present in ``data`` are checked, so it works for create and update.
+    Rules: both units must belong to the company, the two units must differ, and
+    the factor must be positive.
+    """
+    for field in ("from_unit_id", "to_unit_id"):
+        unit_id = data.get(field)
+        if unit_id is not None and get_unit(db, company_id, unit_id) is None:
+            return f"{field} {unit_id} not found in this company."
+    from_id = data.get("from_unit_id")
+    to_id = data.get("to_unit_id")
+    if from_id is not None and to_id is not None and from_id == to_id:
+        return "from_unit_id and to_unit_id must be different."
+    factor = data.get("factor")
+    if factor is not None and factor <= 0:
+        return "factor must be greater than zero."
+    return None
+
+
+def create_conversion(
+    db: Session, company_id: int, data: UnitConversionCreate
+) -> UnitConversion:
+    conversion = UnitConversion(company_id=company_id, **data.model_dump())
+    db.add(conversion)
+    db.commit()
+    db.refresh(conversion)
+    return conversion
+
+
+def update_conversion(
+    db: Session, conversion: UnitConversion, data: UnitConversionUpdate
+) -> UnitConversion:
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(conversion, field, value)
+    db.commit()
+    db.refresh(conversion)
+    return conversion
+
+
+def delete_conversion(db: Session, conversion: UnitConversion) -> None:
+    db.delete(conversion)
     db.commit()
 
 

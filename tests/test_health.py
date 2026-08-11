@@ -15,6 +15,12 @@ client = TestClient(app)
 def test_root():
     resp = client.get("/")
     assert resp.status_code == 200
+    assert "ERP System" in resp.text
+
+
+def test_metadata():
+    resp = client.get("/api/metadata")
+    assert resp.status_code == 200
     body = resp.json()
     assert body["health"] == "/health"
     assert "version" in body

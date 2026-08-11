@@ -42,3 +42,12 @@ Thumbs.db
 postgres_data/
 redis_data/
 *.log
+
+# Backup dumps
+backups/
+
+
+# Local SQLite artifacts (system runs on PostgreSQL)
+app.db
+app.db-journal
+

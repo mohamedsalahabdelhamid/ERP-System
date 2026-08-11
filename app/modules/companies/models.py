@@ -28,6 +28,14 @@ class Company(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     code: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    # Unique subdomain used by the tenant portal: <subdomain>.<domain>.
+    subdomain: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True, unique=True
+    )
+    # status: active / trial / suspended (suspended blocks all tenant access).
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="active", server_default="active"
+    )
     base_currency: Mapped[str] = mapped_column(String(3), nullable=False)
     # activity_type: manufacturing / trading / pharmacy / ... / mixed (spec 1.1).
     activity_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -76,6 +84,11 @@ class CompanySettings(TimestampMixin, Base):
     cost_method: Mapped[str] = mapped_column(
         String(50), nullable=False, default="weighted_average"
     )
+    # Licensed seat count: the company owner may create up to max_users users
+    # (excludes the platform-created owner account when desired).
+    max_users: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=5, server_default="5"
+    )
     has_manufacturing: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
@@ -83,5 +96,20 @@ class CompanySettings(TimestampMixin, Base):
     has_pos: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # pos_style: retail / restaurant / pharmacy / ... (nullable when has_pos is False)
     pos_style: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    # ---- Stock Alert Settings ----
+    # Default threshold below which stock-alert emails are triggered.
+    # Individual items can override this via min_stock_level on the Item model.
+    low_stock_threshold: Mapped[float] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    # Comma-separated list of emails to notify on low/zero stock.
+    alert_emails: Mapped[Optional[str]] = mapped_column(
+        String(1000), nullable=True
+    )
+    # Whether to block sales (invoice + POS) when stock reaches zero.
+    block_negative_stock: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
 
     company: Mapped["Company"] = relationship(back_populates="settings")

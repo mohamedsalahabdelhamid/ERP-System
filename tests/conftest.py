@@ -78,7 +78,16 @@ def _seed_company_admin(db_session, code, email, grant_perms):
     db_session.add(
         CompanySettings(
             company_id=company.id,
-            enabled_modules=["sales"],
+            enabled_modules=[
+                "sales",
+                "purchases",
+                "inventory",
+                "pos",
+                "manufacturing",
+                "projects",
+                "hr",
+                "accounting",
+            ],
             cost_method="weighted_average",
         )
     )
@@ -148,3 +157,18 @@ def seeded_other(db_session):
     return _seed_company_admin(
         db_session, code="OTHER", email="admin@other.com", grant_perms=True
     )
+
+
+@pytest.fixture()
+def superuser(db_session):
+    """A platform superuser (no company required for platform endpoints)."""
+    user = User(
+        email="platform@example.com",
+        password_hash=hash_password("Super@2026X"),
+        full_name="Platform Owner",
+        is_active=True,
+        is_superuser=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    return {"email": user.email, "password": "Super@2026X", "user_id": user.id}

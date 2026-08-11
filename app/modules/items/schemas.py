@@ -62,6 +62,32 @@ class UnitRead(BaseModel):
     is_active: bool
 
 
+# ---- Unit conversions (Phase 4) ----
+class UnitConversionCreate(BaseModel):
+    from_unit_id: int
+    to_unit_id: int
+    factor: float
+    is_active: bool = True
+
+
+class UnitConversionUpdate(BaseModel):
+    from_unit_id: Optional[int] = None
+    to_unit_id: Optional[int] = None
+    factor: Optional[float] = None
+    is_active: Optional[bool] = None
+
+
+class UnitConversionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    company_id: int
+    from_unit_id: int
+    to_unit_id: int
+    factor: float
+    is_active: bool
+
+
 # ---- Items ----
 class ItemCreate(BaseModel):
     name: str
