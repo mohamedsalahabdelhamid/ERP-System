@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getProjects, createProject, addProjectCost, completeProject, getPartners } from '../../api/client';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 export default function Projects() {
+  const { t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [partners, setPartners] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -47,30 +49,30 @@ export default function Projects() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>+ New Project</button>
+        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>{t('projects.new_project')}</button>
       </div>
 
       {showForm && (
         <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>New Project</h3>
+          <h3 style={{ marginBottom: '1.5rem' }}>{t('projects.new_project')}</h3>
           <form onSubmit={handleCreate}>
             <div className="form-grid">
-              <div className="form-group"><label>Project Code</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
-              <div className="form-group"><label>Project Name</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
+              <div className="form-group"><label>{t('projects.project_code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
+              <div className="form-group"><label>{t('projects.project_name')}</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
               <div className="form-group">
-                <label>Client</label>
+                <label>{t('projects.client')}</label>
                 <select value={form.partner_id} onChange={e => setForm({...form, partner_id: e.target.value})}>
-                  <option value="">-- Select --</option>
+                  <option value="">{t('common.select')}</option>
                   {partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
-              <div className="form-group"><label>Contract Value</label><input type="number" step="0.01" value={form.contract_value} onChange={e => setForm({...form, contract_value: e.target.value})} /></div>
-              <div className="form-group"><label>Start Date</label><input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} /></div>
-              <div className="form-group"><label>End Date</label><input type="date" value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
+              <div className="form-group"><label>{t('projects.contract_value')}</label><input type="number" step="0.01" value={form.contract_value} onChange={e => setForm({...form, contract_value: e.target.value})} /></div>
+              <div className="form-group"><label>{t('projects.start_date')}</label><input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} /></div>
+              <div className="form-group"><label>{t('projects.end_date')}</label><input type="date" value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Create Project'}</button>
-              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? t('common.saving') : t('projects.create_project')}</button>
+              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => setShowForm(false)}>{t('common.cancel')}</button>
             </div>
           </form>
         </div>
@@ -78,24 +80,24 @@ export default function Projects() {
 
       {selectedProject && showCostForm && (
         <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>Add Cost to: {selectedProject.name}</h3>
+          <h3 style={{ marginBottom: '1.5rem' }}>{t('projects.add_cost_to', { name: selectedProject.name })}</h3>
           <form onSubmit={handleAddCost}>
             <div className="form-grid">
               <div className="form-group">
-                <label>Cost Type</label>
+                <label>{t('projects.cost_type')}</label>
                 <select value={costForm.cost_type} onChange={e => setCostForm({...costForm, cost_type: e.target.value})}>
-                  <option value="material">Material</option>
-                  <option value="labor">Labor</option>
-                  <option value="overhead">Overhead</option>
+                  <option value="material">{t('projects.material')}</option>
+                  <option value="labor">{t('projects.labor')}</option>
+                  <option value="overhead">{t('projects.overhead')}</option>
                 </select>
               </div>
-              <div className="form-group"><label>Description</label><input value={costForm.description} onChange={e => setCostForm({...costForm, description: e.target.value})} required /></div>
-              <div className="form-group"><label>Qty</label><input type="number" step="0.01" value={costForm.quantity} onChange={e => setCostForm({...costForm, quantity: e.target.value})} /></div>
-              <div className="form-group"><label>Unit Cost</label><input type="number" step="0.01" value={costForm.unit_cost} onChange={e => setCostForm({...costForm, unit_cost: e.target.value})} /></div>
+              <div className="form-group"><label>{t('projects.description')}</label><input value={costForm.description} onChange={e => setCostForm({...costForm, description: e.target.value})} required /></div>
+              <div className="form-group"><label>{t('projects.qty')}</label><input type="number" step="0.01" value={costForm.quantity} onChange={e => setCostForm({...costForm, quantity: e.target.value})} /></div>
+              <div className="form-group"><label>{t('projects.unit_cost')}</label><input type="number" step="0.01" value={costForm.unit_cost} onChange={e => setCostForm({...costForm, unit_cost: e.target.value})} /></div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Add Cost'}</button>
-              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => { setShowCostForm(false); setSelectedProject(null); }}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? t('common.saving') : t('projects.add_cost')}</button>
+              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => { setShowCostForm(false); setSelectedProject(null); }}>{t('common.cancel')}</button>
             </div>
           </form>
         </div>
@@ -103,10 +105,10 @@ export default function Projects() {
 
       <div className="table-container">
         <table>
-          <thead><tr><th>Code</th><th>Name</th><th>Contract Value</th><th>Total Cost</th><th>Margin</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>{t('projects.code')}</th><th>{t('projects.name')}</th><th>{t('projects.contract_value')}</th><th>{t('projects.total_cost')}</th><th>{t('projects.margin')}</th><th>{t('projects.status')}</th><th>{t('projects.actions')}</th></tr></thead>
           <tbody>
             {projects.length === 0
-              ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No projects</td></tr>
+              ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('projects.no_projects')}</td></tr>
               : projects.map(p => {
                 const margin = parseFloat(p.contract_value || 0) - parseFloat(p.total_cost || 0);
                 return (
@@ -118,8 +120,8 @@ export default function Projects() {
                     <td style={{ color: margin >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>${margin.toFixed(2)}</td>
                     <td><span className={`status-badge ${p.status === 'completed' ? 'status-completed' : 'status-pending'}`}>{p.status}</span></td>
                     <td style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button className="btn" style={{ background: 'rgba(255,255,255,0.08)', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => { setSelectedProject(p); setShowCostForm(true); }}>+ Cost</button>
-                      {p.status !== 'completed' && <button className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => handleComplete(p.id)}>Complete</button>}
+                      <button className="btn" style={{ background: 'rgba(255,255,255,0.08)', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => { setSelectedProject(p); setShowCostForm(true); }}>{t('projects.cost_btn')}</button>
+                      {p.status !== 'completed' && <button className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => handleComplete(p.id)}>{t('projects.complete')}</button>}
                     </td>
                   </tr>
                 );

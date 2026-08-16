@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/client';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 const getSettings = () => api.get('/companies/settings');
 const updateSettings = (data) => api.patch('/companies/settings', data);
 
 export default function CompanySettings() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState(null);
   const [form, setForm] = useState({
     low_stock_threshold: 0,
@@ -30,7 +32,7 @@ export default function CompanySettings() {
         block_negative_stock: res.data.block_negative_stock ?? true,
       });
     } catch (err) {
-      showToast('Failed to load settings', 'error');
+      showToast(t('companysettings.load_failed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -52,16 +54,16 @@ export default function CompanySettings() {
       };
       const res = await updateSettings(payload);
       setSettings(res.data);
-      showToast('✅ Settings saved successfully!', 'success');
+      showToast(`✅ ${t('companysettings.save_success')}`, 'success');
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Failed to save settings', 'error');
+      showToast(err.response?.data?.detail || t('companysettings.save_failed'), 'error');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>Loading settings...</div>;
+    return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>{t('companysettings.loading')}</div>;
   }
 
   return (
@@ -88,19 +90,19 @@ export default function CompanySettings() {
         {settings && (
           <div className="glass-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem' }}>
             <div>
-              <div className="kpi-title">Modules Enabled</div>
+              <div className="kpi-title">{t('companysettings.modules_enabled')}</div>
               <div style={{ fontSize: '1rem', fontWeight: 600, marginTop: '0.25rem' }}>
                 {(settings.enabled_modules || []).length || 'All'}
               </div>
             </div>
             <div>
-              <div className="kpi-title">Cost Method</div>
+              <div className="kpi-title">{t('companysettings.cost_method')}</div>
               <div style={{ fontSize: '1rem', fontWeight: 600, marginTop: '0.25rem', textTransform: 'capitalize' }}>
-                {settings.cost_method?.replace('_', ' ') || 'Weighted Average'}
+                {settings.cost_method?.replace('_', ' ') || t('companysettings.weighted_average')}
               </div>
             </div>
             <div>
-              <div className="kpi-title">Max Users</div>
+              <div className="kpi-title">{t('companysettings.max_users')}</div>
               <div style={{ fontSize: '1rem', fontWeight: 600, marginTop: '0.25rem' }}>{settings.max_users}</div>
             </div>
           </div>
@@ -108,11 +110,9 @@ export default function CompanySettings() {
 
         {/* Stock Alert Settings */}
         <div className="glass-card">
-          <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>📦 Inventory Alert Settings</h3>
+          <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>📦 {t('companysettings.inventory_alerts')}</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-            Configure automatic email alerts when stock drops below the threshold. You can also set
-            per-item thresholds from the <strong>Items &amp; Products</strong> page — item-level thresholds
-            take priority over the company default.
+            {t('companysettings.alert_desc')}
           </p>
 
           <form onSubmit={handleSave}>
@@ -134,12 +134,12 @@ export default function CompanySettings() {
                 </div>
                 <div>
                   <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                    🔒 Block Sales When Stock Reaches Zero
+                    🔒 {t('companysettings.block_negative')}
                   </div>
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                     {form.block_negative_stock
-                      ? '✅ Enabled — the system will prevent confirming sales invoices or POS orders that would result in negative stock.'
-                      : '❌ Disabled — sales can be confirmed even when stock is zero or negative (not recommended).'}
+                      ? `✅ ${t('companysettings.block_enabled')}`
+                      : `❌ ${t('companysettings.block_disabled')}`}
                   </div>
                 </div>
               </label>
@@ -148,7 +148,7 @@ export default function CompanySettings() {
             <div className="form-grid" style={{ marginBottom: '1.25rem' }}>
               {/* Threshold */}
               <div className="form-group">
-                <label>Default Low-Stock Threshold (units)</label>
+                <label>{t('companysettings.threshold')}</label>
                 <input
                   id="low_stock_threshold"
                   type="number"
@@ -158,24 +158,23 @@ export default function CompanySettings() {
                   onChange={e => setForm({ ...form, low_stock_threshold: e.target.value })}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                  Set to 0 to disable company-level alerts (use per-item thresholds instead).
+                  {t('companysettings.threshold_hint')}
                 </span>
               </div>
             </div>
 
             {/* Alert emails */}
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label>Alert Email Recipients (comma-separated)</label>
+              <label>{t('companysettings.alert_emails')}</label>
               <input
                 id="alert_emails"
                 type="text"
-                placeholder="manager@company.com, owner@company.com, warehouse@company.com"
+                placeholder={t('companysettings.alert_emails_placeholder')}
                 value={form.alert_emails}
                 onChange={e => setForm({ ...form, alert_emails: e.target.value })}
               />
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block', lineHeight: 1.5 }}>
-                These recipients will receive an email when any item's stock falls at or below its threshold.
-                Leave empty to disable email alerts.
+                {t('companysettings.alert_emails_hint')}
               </span>
             </div>
 
@@ -187,7 +186,7 @@ export default function CompanySettings() {
                 border: '1px solid rgba(79,70,229,0.25)',
               }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: 600 }}>
-                  📧 Will send alerts to:
+                  📧 {t('companysettings.will_send_to')}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {form.alert_emails.split(',').map(e => e.trim()).filter(Boolean).map((email, i) => (
@@ -205,7 +204,7 @@ export default function CompanySettings() {
 
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button type="submit" className="btn btn-primary" disabled={saving} style={{ minWidth: '160px' }}>
-                {saving ? '⏳ Saving...' : '💾 Save Settings'}
+                {saving ? `⏳ ${t('companysettings.saving')}` : `💾 ${t('companysettings.save_settings')}`}
               </button>
             </div>
           </form>
@@ -217,10 +216,10 @@ export default function CompanySettings() {
           background: 'rgba(245,158,11,0.04)',
         }}>
           <h4 style={{ marginBottom: '0.5rem', color: 'var(--warning)', fontSize: '0.95rem' }}>
-            ⚙️ Email Server Configuration (SMTP)
+            ⚙️ {t('companysettings.smtp_title')}
           </h4>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
-            To enable email sending, configure the following environment variables in your server's <code>.env</code> file:
+            {t('companysettings.smtp_desc')} <code>.env</code>
           </p>
           <pre style={{
             marginTop: '0.875rem', background: 'rgba(0,0,0,0.3)',

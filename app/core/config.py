@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     # Lifetime of an access token / session, in minutes (default: 1 day).
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
+    # ---- Login rate limiting (Redis-backed) ----
+    # Failed attempts per (IP+email) and per IP within the sliding window.
+    LOGIN_MAX_ATTEMPTS: int = 5
+    LOGIN_MAX_IP_ATTEMPTS: int = 20
+    LOGIN_WINDOW_SECONDS: int = 900  # 15 minutes
+    LOGIN_LOCKOUT_SECONDS: int = 300  # 5 minutes
+
     # ---- PostgreSQL ----
     POSTGRES_HOST: str = "db"
     POSTGRES_PORT: int = 5432

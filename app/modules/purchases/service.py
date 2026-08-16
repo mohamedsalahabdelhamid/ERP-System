@@ -89,7 +89,11 @@ def _calculate_totals(db: Session, invoice: PurchaseInvoice) -> None:
     invoice.total_amount_base = total_amount * float(invoice.fx_rate)
 
 
-def create_invoice(db: Session, company_id: int, data: PurchaseInvoiceCreate) -> PurchaseInvoice:
+def create_invoice(
+    db: Session, company_id: int, data: PurchaseInvoiceCreate, commit: bool = True
+) -> PurchaseInvoice:
+    """Create an invoice (draft). ``commit=False`` lets callers compose this
+    inside a single atomic transaction."""
     payload = data.model_dump()
     _validate_invoice_data(db, company_id, payload)
     invoice = PurchaseInvoice(
@@ -101,12 +105,14 @@ def create_invoice(db: Session, company_id: int, data: PurchaseInvoiceCreate) ->
         fx_rate=payload["fx_rate"],
     )
     db.add(invoice)
-    db.commit()
+    db.flush()
     db.refresh(invoice)
     _create_lines(db, invoice, payload["lines"])
     db.flush()
     _calculate_totals(db, invoice)
-    db.commit()
+    db.flush()
+    if commit:
+        db.commit()
     db.refresh(invoice)
     return invoice
 
@@ -127,12 +133,19 @@ def update_invoice(db: Session, invoice: PurchaseInvoice, data: PurchaseInvoiceU
     return invoice
 
 
-def delete_invoice(db: Session, invoice: PurchaseInvoice) -> None:
+def delete_invoice(db: Session, invoice: PurchaseInvoice, commit: bool = True) -> None:
+    if invoice.is_confirmed:
+        raise ValueError(
+            "Cannot delete a confirmed purchase invoice; reverse it with a debit note."
+        )
     db.delete(invoice)
-    db.commit()
+    if commit:
+        db.commit()
 
 
-def confirm_invoice(db: Session, invoice: PurchaseInvoice) -> PurchaseInvoice:
+def confirm_invoice(
+    db: Session, invoice: PurchaseInvoice, commit: bool = True
+) -> PurchaseInvoice:
     if invoice.is_confirmed:
         return invoice
 
@@ -153,12 +166,15 @@ def confirm_invoice(db: Session, invoice: PurchaseInvoice) -> PurchaseInvoice:
 
     lines = list(db.scalars(select(PurchaseInvoiceLine).where(PurchaseInvoiceLine.invoice_id == invoice.id)).all())
     for line in lines:
+        # FOR UPDATE: serialize concurrent receipts on the same stock row.
         stock = db.scalar(
-            select(WarehouseStock).where(
+            select(WarehouseStock)
+            .where(
                 WarehouseStock.company_id == invoice.company_id,
                 WarehouseStock.warehouse_id == warehouse.id,
                 WarehouseStock.item_id == line.item_id,
             )
+            .with_for_update()
         )
         if stock is None:
             stock = WarehouseStock(
@@ -211,9 +227,10 @@ def confirm_invoice(db: Session, invoice: PurchaseInvoice) -> PurchaseInvoice:
         entry_date=invoice.date.strftime("%Y-%m-%d %H:%M:%S"),
         notes=f"Purchase Invoice {invoice.number}",
         lines=je_lines
-    ))
+    ), commit=False)
 
     invoice.is_confirmed = True
-    db.commit()
+    if commit:
+        db.commit()
     db.refresh(invoice)
     return invoice

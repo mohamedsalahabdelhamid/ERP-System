@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getLeaveRequests, createLeaveRequest, updateLeaveStatus, getEmployees } from '../../api/client';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 export default function LeaveRequests() {
+  const { t } = useTranslation();
   const [requests, setRequests] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -22,9 +24,9 @@ export default function LeaveRequests() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.employee_id) { alert('Select an employee'); return; }
-    if (!form.start_date || !form.end_date) { alert('Select start and end dates'); return; }
-    if (form.end_date < form.start_date) { alert('End date must be after start date'); return; }
+    if (!form.employee_id) { alert(t('leaverequests.select_employee_err')); return; }
+    if (!form.start_date || !form.end_date) { alert(t('leaverequests.select_dates_err')); return; }
+    if (form.end_date < form.start_date) { alert(t('leaverequests.date_order_err')); return; }
     const days = Math.max(1, Math.round((new Date(form.end_date) - new Date(form.start_date)) / 86400000) + 1);
     setLoading(true);
     try {
@@ -59,12 +61,12 @@ export default function LeaveRequests() {
     }`}>{status}</span>
   );
 
-  const typeLabel = { annual: '🌴 Annual', sick: '🤒 Sick', unpaid: '🚫 Unpaid' };
+  const typeLabel = { annual: `🌴 ${t('leaverequests.annual')}`, sick: `🤒 ${t('leaverequests.sick')}`, unpaid: `🚫 ${t('leaverequests.unpaid')}` };
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>+ New Leave Request</button>
+        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>{t('leaverequests.new_request')}</button>
       </div>
 
       {showForm && (
@@ -72,28 +74,28 @@ export default function LeaveRequests() {
           <form onSubmit={handleCreate}>
             <div className="form-grid">
               <div className="form-group">
-                <label>Employee</label>
+                <label>{t('leaverequests.employee')}</label>
                 <select value={form.employee_id} onChange={e => setForm({ ...form, employee_id: e.target.value })} required>
-                  <option value="">Select employee</option>
+                  <option value="">{t('leaverequests.select_employee')}</option>
                   {employees.map(em => <option key={em.id} value={em.id}>{em.employee_number} — {em.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label>Leave Type</label>
+                <label>{t('leaverequests.leave_type')}</label>
                 <select value={form.leave_type} onChange={e => setForm({ ...form, leave_type: e.target.value })}>
-                  <option value="annual">Annual</option>
-                  <option value="sick">Sick</option>
-                  <option value="unpaid">Unpaid</option>
+                  <option value="annual">{t('leaverequests.annual')}</option>
+                  <option value="sick">{t('leaverequests.sick')}</option>
+                  <option value="unpaid">{t('leaverequests.unpaid')}</option>
                 </select>
               </div>
-              <div className="form-group"><label>Start Date</label><input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} required /></div>
-              <div className="form-group"><label>End Date</label><input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} required /></div>
-              <div className="form-group"><label>Days</label><input type="number" step="0.5" value={form.start_date && form.end_date && form.end_date >= form.start_date ? Math.round((new Date(form.end_date) - new Date(form.start_date)) / 86400000) + 1 : form.days} readOnly /></div>
-              <div className="form-group"><label>Reason</label><input value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} /></div>
+              <div className="form-group"><label>{t('leaverequests.start_date')}</label><input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} required /></div>
+              <div className="form-group"><label>{t('leaverequests.end_date')}</label><input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} required /></div>
+              <div className="form-group"><label>{t('leaverequests.days')}</label><input type="number" step="0.5" value={form.start_date && form.end_date && form.end_date >= form.start_date ? Math.round((new Date(form.end_date) - new Date(form.start_date)) / 86400000) + 1 : form.days} readOnly /></div>
+              <div className="form-group"><label>{t('leaverequests.reason')}</label><input value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} /></div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Submit Request'}</button>
-              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? t('common.saving') : t('leaverequests.submit')}</button>
+              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => setShowForm(false)}>{t('common.cancel')}</button>
             </div>
           </form>
         </div>
@@ -101,10 +103,10 @@ export default function LeaveRequests() {
 
       <div className="table-container">
         <table>
-          <thead><tr><th>Employee</th><th>Type</th><th>Period</th><th>Days</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>{t('leaverequests.employee')}</th><th>{t('leaverequests.leave_type')}</th><th>{t('leaverequests.period')}</th><th>{t('leaverequests.days')}</th><th>{t('leaverequests.reason')}</th><th>{t('leaverequests.status')}</th><th>{t('leaverequests.actions')}</th></tr></thead>
           <tbody>
             {requests.length === 0
-              ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No leave requests</td></tr>
+              ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('leaverequests.no_requests')}</td></tr>
               : requests.map(r => (
                 <tr key={r.id}>
                   <td>{empName(r.employee_id)}</td>
@@ -116,9 +118,9 @@ export default function LeaveRequests() {
                   <td>
                     {r.status === 'pending' && (
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-primary" style={{ padding: '0.3rem 0.8rem' }} onClick={() => handleStatus(r.id, 'approved')}>Approve</button>
-                        <button className="btn" style={{ background: 'rgba(255,0,0,0.15)', padding: '0.3rem 0.8rem' }} onClick={() => handleStatus(r.id, 'rejected')}>Reject</button>
-                        <button className="btn" style={{ background: 'rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem' }} onClick={() => handleStatus(r.id, 'cancelled')}>Cancel</button>
+                        <button className="btn btn-primary" style={{ padding: '0.3rem 0.8rem' }} onClick={() => handleStatus(r.id, 'approved')}>{t('leaverequests.approve')}</button>
+                        <button className="btn" style={{ background: 'rgba(255,0,0,0.15)', padding: '0.3rem 0.8rem' }} onClick={() => handleStatus(r.id, 'rejected')}>{t('leaverequests.reject')}</button>
+                        <button className="btn" style={{ background: 'rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem' }} onClick={() => handleStatus(r.id, 'cancelled')}>{t('leaverequests.cancel')}</button>
                       </div>
                     )}
                     {r.status !== 'pending' && <span style={{ color: 'var(--text-secondary)' }}>—</span>}

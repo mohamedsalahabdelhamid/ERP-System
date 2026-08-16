@@ -100,3 +100,4 @@ class StockTakeRead(BaseModel):
     created_by: int
     posted_at: Optional[str]
     note: Optional[str]
+    lines: list[StockTakeLineRead] = []

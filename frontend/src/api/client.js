@@ -83,6 +83,7 @@ export const getMovements = () => api.get('/inventory-movements');
 
 // ---- Stock takes ----
 export const getStockTakes = () => api.get('/stock-takes');
+export const getStockTake = (id) => api.get(`/stock-takes/${id}`);
 export const createStockTake = (data) => api.post('/stock-takes', data);
 export const postStockTake = (id) => api.post(`/stock-takes/${id}/post`);
 
@@ -141,6 +142,9 @@ export const completeProject = (id) => api.post(`/projects/${id}/complete`);
 // ---- Manufacturing ----
 export const getWorkOrders = () => api.get('/manufacturing/work-orders');
 export const createWorkOrder = (data) => api.post('/manufacturing/work-orders', data);
+export const finishWorkOrder = (id, data) => api.post(`/manufacturing/work-orders/${id}/finish`, data);
+export const getBoms = () => api.get('/manufacturing/boms');
+export const createBom = (data) => api.post('/manufacturing/boms', data);
 
 // ---- Reports ----
 export const getSalesSummary = (params) => api.get('/reports/sales-summary', { params });

@@ -6,6 +6,7 @@ auth flow be tested without Postgres or Docker.
 """
 
 import pytest
+import redis
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -19,6 +20,30 @@ from app.modules.companies.models import Branch, Company, CompanySettings
 from app.modules.rbac.models import Role, UserRole
 from app.modules.rbac.seed import grant_all_to_role, sync_permissions
 from app.modules.users.models import User
+
+
+class _OfflineRedis:
+    """Stands in for the Redis client: every command fails immediately.
+
+    The app treats Redis as optional and fails open on redis.RedisError, so a
+    stub that raises instantly keeps tests fast and deterministic without a
+    live Redis.
+    """
+
+    def __getattr__(self, name):
+        def _raise(*args, **kwargs):
+            raise redis.exceptions.ConnectionError("Redis is offline in tests")
+
+        return _raise
+
+
+@pytest.fixture(autouse=True)
+def _redis_offline(monkeypatch):
+    """Make every login skip real Redis (fast fail-open) in the test suite."""
+    stub = lambda: _OfflineRedis()
+    # rate_limit binds `get_redis` at import time, so patch both references.
+    monkeypatch.setattr("app.core.redis_client.get_redis", stub)
+    monkeypatch.setattr("app.core.rate_limit.get_redis", stub)
 
 
 @pytest.fixture()

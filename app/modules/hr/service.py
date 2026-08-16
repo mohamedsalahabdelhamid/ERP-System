@@ -158,15 +158,26 @@ def run_payroll(db: Session, company_id: int, data: PayrollRunCreate) -> Payroll
     # Accounting journal entry
     salaries_acc = get_or_create_default_account(db, company_id, "expense", "6500", "Salaries Expense")
     cash_acc = get_or_create_default_account(db, company_id, "cash", "1010", "Cash & Bank")
+    deductions_acc = get_or_create_default_account(db, company_id, "liability", "2300", "Statutory Deductions Payable")
+    # The entry must balance: gross salary expense is offset by net cash paid
+    # plus the withheld deductions (absences, statutory deductions) that are
+    # now payable to the tax/social-insurance authority.
     je_lines = [
         JournalLineCreate(account_id=salaries_acc.id, debit=total_gross, credit=0.0, description=f"Payroll {data.period}"),
         JournalLineCreate(account_id=cash_acc.id, debit=0.0, credit=total_net, description=f"Net Pay {data.period}")
     ]
+    if payroll.total_deductions > 0:
+        je_lines.append(JournalLineCreate(
+            account_id=deductions_acc.id,
+            debit=0.0,
+            credit=payroll.total_deductions,
+            description=f"Payroll Deductions {data.period}"
+        ))
     create_journal_entry(db, company_id, JournalEntryCreate(
         reference=f"PAY-{data.period}",
         notes=f"Payroll run for {data.period}",
         lines=je_lines
-    ))
+    ), commit=False)
 
     db.commit()
     db.refresh(payroll)

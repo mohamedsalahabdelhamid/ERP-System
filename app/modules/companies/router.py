@@ -46,9 +46,22 @@ def list_my_companies(
 def create_branch(
     company_id: int,
     data: BranchCreate,
+    user: User = Depends(get_current_user),
     session: AuthSession = Depends(get_current_session),
     db: Session = Depends(get_db),
 ) -> Branch:
+    # IDOR guard: the path company_id must be one the user has a role in.
+    # Without this check a tenant could create branches inside — and then
+    # switch the session scope to — an arbitrary company they don't belong to.
+    if not company_service.user_can_access_company(db, user.id, company_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User has no access to this company.",
+        )
+    if db.get(Company, company_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Company not found."
+        )
     branch = company_service.create_branch(db, company_id, data)
     session.current_company_id = company_id
     session.current_branch_id = branch.id

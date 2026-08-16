@@ -91,7 +91,11 @@ def _calculate_totals(db: Session, invoice: SalesInvoice) -> None:
     invoice.total_amount_base = total_amount * float(invoice.fx_rate)
 
 
-def create_invoice(db: Session, company_id: int, data: SalesInvoiceCreate) -> SalesInvoice:
+def create_invoice(
+    db: Session, company_id: int, data: SalesInvoiceCreate, commit: bool = True
+) -> SalesInvoice:
+    """Create an invoice (draft). ``commit=False`` lets callers (e.g. POS)
+    compose this inside a single atomic transaction."""
     payload = data.model_dump()
     _validate_invoice_data(db, company_id, payload)
     invoice = SalesInvoice(
@@ -103,12 +107,14 @@ def create_invoice(db: Session, company_id: int, data: SalesInvoiceCreate) -> Sa
         fx_rate=payload["fx_rate"],
     )
     db.add(invoice)
-    db.commit()
+    db.flush()
     db.refresh(invoice)
     _create_lines(db, invoice, payload["lines"])
     db.flush()
     _calculate_totals(db, invoice)
-    db.commit()
+    db.flush()
+    if commit:
+        db.commit()
     db.refresh(invoice)
     return invoice
 
@@ -129,12 +135,19 @@ def update_invoice(db: Session, invoice: SalesInvoice, data: SalesInvoiceUpdate)
     return invoice
 
 
-def delete_invoice(db: Session, invoice: SalesInvoice) -> None:
+def delete_invoice(db: Session, invoice: SalesInvoice, commit: bool = True) -> None:
+    if invoice.is_confirmed:
+        raise ValueError(
+            "Cannot delete a confirmed sales invoice; reverse it with a credit note."
+        )
     db.delete(invoice)
-    db.commit()
+    if commit:
+        db.commit()
 
 
-def confirm_invoice(db: Session, invoice: SalesInvoice) -> SalesInvoice:
+def confirm_invoice(
+    db: Session, invoice: SalesInvoice, commit: bool = True
+) -> SalesInvoice:
     if invoice.is_confirmed:
         return invoice
 
@@ -183,12 +196,17 @@ def confirm_invoice(db: Session, invoice: SalesInvoice) -> SalesInvoice:
     low_stock_alerts = []  # collect items that need alerts after commit
 
     for line in lines:
+        # FOR UPDATE: serialize concurrent confirmations on the same stock row,
+        # then re-verify stock after acquiring the lock so two parallel sales
+        # can never push the quantity negative.
         stock = db.scalar(
-            select(WarehouseStock).where(
+            select(WarehouseStock)
+            .where(
                 WarehouseStock.company_id == invoice.company_id,
                 WarehouseStock.warehouse_id == warehouse.id,
                 WarehouseStock.item_id == line.item_id,
             )
+            .with_for_update()
         )
         if stock is None:
             stock = WarehouseStock(
@@ -205,6 +223,15 @@ def confirm_invoice(db: Session, invoice: SalesInvoice) -> SalesInvoice:
         unit_cost = old_cost
         total_cost = float(line.quantity or 0) * unit_cost
         new_qty = old_qty - float(line.quantity or 0)
+        if block_negative and new_qty < 0:
+            from app.modules.items.models import Item
+            item = db.get(Item, line.item_id)
+            item_name = item.name if item else f"Item#{line.item_id}"
+            raise ValueError(
+                f"Insufficient stock for '{item_name}': "
+                f"available {old_qty:.2f}, requested {float(line.quantity):.2f}. "
+                f"Cannot sell below zero stock."
+            )
         new_avg_cost = old_cost if new_qty != 0 else 0
         stock.quantity = new_qty
         stock.average_cost = new_avg_cost
@@ -260,10 +287,11 @@ def confirm_invoice(db: Session, invoice: SalesInvoice) -> SalesInvoice:
         entry_date=invoice.date.strftime("%Y-%m-%d %H:%M:%S"),
         notes=f"Sales Invoice {invoice.number}",
         lines=je_lines
-    ))
+    ), commit=False)
 
     invoice.is_confirmed = True
-    db.commit()
+    if commit:
+        db.commit()
     db.refresh(invoice)
 
     # ---- Send low-stock alert emails (after commit, best-effort) ----

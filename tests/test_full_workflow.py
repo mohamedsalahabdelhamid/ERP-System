@@ -78,8 +78,9 @@ def test_complete_business_flow():
             assert payment_resp.status_code == 201
             account_resp = client.post('/api/v1/accounting/accounts', json={'code':'1001','name':'Cash','account_type':'asset'}, headers=headers)
             assert account_resp.status_code == 201
-            journal_resp = client.post('/api/v1/accounting/journal-entries', json={'reference':'J1','entry_date':'2026-01-01','notes':'test'}, headers=headers)
-            assert journal_resp.status_code == 201
+            acc_id = account_resp.json()['id']
+            journal_resp = client.post('/api/v1/accounting/journal-entries', json={'reference':'J1','entry_date':'2026-01-01','notes':'test','lines':[{'account_id':acc_id,'debit':100.0,'credit':0.0,'description':'dr'},{'account_id':acc_id,'debit':0.0,'credit':100.0,'description':'cr'}]}, headers=headers)
+            assert journal_resp.status_code == 201, journal_resp.text
             assert client.get('/health').status_code == 200
             assert client.get('/').status_code == 200
     finally:

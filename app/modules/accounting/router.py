@@ -52,7 +52,10 @@ def create_journal_entry_endpoint(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> JournalEntryRead:
-    return create_journal_entry(db, company_id, data)
+    try:
+        return create_journal_entry(db, company_id, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.get("/reports/trial-balance", dependencies=[Depends(require_permission("accounting.reports"))])

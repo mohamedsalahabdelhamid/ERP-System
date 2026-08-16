@@ -61,12 +61,12 @@ def finish_work_order(db: Session, wo: WorkOrder, labor: list[WorkOrderLaborCrea
         for bl in bom_lines:
             req_qty = float(bl.quantity) * multiplier
             
-            # Stock lookup
+            # Stock lookup (FOR UPDATE: serialize concurrent work orders)
             stock = db.scalar(select(WarehouseStock).where(
                 WarehouseStock.company_id == wo.company_id,
                 WarehouseStock.warehouse_id == wo.warehouse_id,
                 WarehouseStock.item_id == bl.item_id
-            ))
+            ).with_for_update())
             
             if stock:
                 unit_cost = float(stock.average_cost)
@@ -125,7 +125,7 @@ def finish_work_order(db: Session, wo: WorkOrder, labor: list[WorkOrderLaborCrea
         WarehouseStock.company_id == wo.company_id,
         WarehouseStock.warehouse_id == wo.warehouse_id,
         WarehouseStock.item_id == wo.item_id
-    ))
+    ).with_for_update())
     
     if stock_in is None:
         stock_in = WarehouseStock(company_id=wo.company_id, warehouse_id=wo.warehouse_id, item_id=wo.item_id, quantity=0, average_cost=0)
@@ -175,7 +175,7 @@ def finish_work_order(db: Session, wo: WorkOrder, labor: list[WorkOrderLaborCrea
         entry_date=None,
         notes=f"Work Order {wo.number} Completion",
         lines=je_lines
-    ))
+    ), commit=False)
     
     db.commit()
     db.refresh(wo)

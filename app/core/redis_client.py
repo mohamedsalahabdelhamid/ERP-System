@@ -14,8 +14,18 @@ from app.core.config import settings
 
 @lru_cache
 def get_redis() -> "redis.Redis":
-    """Return a cached Redis client instance."""
-    return redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
+    """Return a cached Redis client instance.
+
+    Short socket timeouts keep the fail-open path fast: if Redis is down, a
+    command returns an error within 2s instead of blocking on the OS default
+    (which can be 20s+ on some systems).
+    """
+    return redis.Redis.from_url(
+        settings.REDIS_URL,
+        decode_responses=True,
+        socket_connect_timeout=2,
+        socket_timeout=2,
+    )
 
 
 def ping_redis() -> bool:

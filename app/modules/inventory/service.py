@@ -193,11 +193,13 @@ def post_stock_take(
         if line.diff_qty == 0:
             continue
         stock = db.scalar(
-            select(WarehouseStock).where(
+            select(WarehouseStock)
+            .where(
                 WarehouseStock.company_id == company_id,
                 WarehouseStock.warehouse_id == stock_take.warehouse_id,
                 WarehouseStock.item_id == line.item_id,
             )
+            .with_for_update()
         )
         if stock is None:
             stock = WarehouseStock(

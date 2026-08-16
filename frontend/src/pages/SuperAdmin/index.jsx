@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getPlatformModules, getPlatformCompanies, createPlatformCompany, updatePlatformCompany, getPlatformCompanyUsers, createPlatformCompanyUser, resetUserPassword } from '../../api/client';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 export default function SuperAdmin() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('companies');
   const [companies, setCompanies] = useState([]);
   const [modules, setModules] = useState([]);
@@ -13,6 +15,7 @@ export default function SuperAdmin() {
   const [userForm, setUserForm] = useState({ email: '', full_name: '', password: '', role_names: [] });
   const [passwordReset, setPasswordReset] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const [form, setForm] = useState({
     name: '', code: '', subdomain: '', owner_email: '', owner_name: '', owner_password: '', base_currency: 'USD', activity_type: 'trading', modules: [], max_users: 10
@@ -30,8 +33,10 @@ export default function SuperAdmin() {
       ]);
       setCompanies(compRes.data || []);
       setModules(modRes.data || []);
+      setLoadError('');
     } catch (err) {
       console.error(err);
+      setLoadError('Failed to load platform data');
     }
   };
 
@@ -122,16 +127,16 @@ export default function SuperAdmin() {
       <form onSubmit={c ? handleSaveEdit : handleSubmit}>
         <div className="form-grid">
           <div className="form-group">
-            <label>Company Name</label>
-            <input value={mForm.name} onChange={e => setForm({...form, name: e.target.value})} required disabled={!!c} />
+            <label>{t('superadmin.company_name')}</label>
+            <input value={mForm.name} onChange={e => c ? setEditForm({...editForm, name: e.target.value}) : setForm({...form, name: e.target.value})} required disabled={!!c} />
           </div>
           <div className="form-group">
-            <label>Company Code</label>
-            <input value={mForm.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase()})} required disabled={!!c} />
+            <label>{t('superadmin.company_code')}</label>
+            <input value={mForm.code} onChange={e => c ? setEditForm({...editForm, code: e.target.value.toUpperCase()}) : setForm({...form, code: e.target.value.toUpperCase()})} required disabled={!!c} />
           </div>
           <div className="form-group">
             <label>Activity Type</label>
-            <select value={mForm.activity_type} onChange={e => setForm({...form, activity_type: e.target.value})} disabled={!!c}>
+            <select value={mForm.activity_type} onChange={e => c ? setEditForm({...editForm, activity_type: e.target.value}) : setForm({...form, activity_type: e.target.value})} disabled={!!c}>
               <option value="trading">Trading</option>
               <option value="retail">Retail (POS)</option>
               <option value="manufacturing">Manufacturing</option>
@@ -139,7 +144,7 @@ export default function SuperAdmin() {
             </select>
           </div>
           <div className="form-group">
-            <label>Max Users</label>
+            <label>{t('superadmin.max_users')}</label>
             <input type="number" value={mForm.max_users} onChange={e => c ? setEditForm({...editForm, max_users: parseInt(e.target.value)}) : setForm({...form, max_users: parseInt(e.target.value)})} required />
           </div>
           <div className="form-group">
@@ -180,8 +185,14 @@ export default function SuperAdmin() {
 
   return (
     <div>
+      {loadError && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--danger)' }}>
+          <span>{loadError}</span>
+          <button className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={fetchData}>Retry</button>
+        </div>
+      )}
       <div className="tab-bar" style={{ marginBottom: '1.5rem' }}>
-        <button className={`tab-btn ${tab === 'companies' ? 'active' : ''}`} onClick={() => setTab('companies')}>Companies</button>
+        <button className={`tab-btn ${tab === 'companies' ? 'active' : ''}`} onClick={() => setTab('companies')}>{t('superadmin.companies')}</button>
         <button className={`tab-btn ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>Users</button>
       </div>
 
@@ -189,7 +200,7 @@ export default function SuperAdmin() {
         <>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
             <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-              {showForm ? 'Cancel' : '+ Provision New Tenant'}
+              {showForm ? t('common.cancel') : `+ ${t('superadmin.create_company')}`}
             </button>
           </div>
 

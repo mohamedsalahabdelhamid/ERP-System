@@ -6,9 +6,14 @@
     GET  /auth/me               -> current user, active scope, accessible companies.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from app.core.rate_limit import (
+    login_allowed,
+    record_login_failure,
+    record_login_success,
+)
 from app.db.session import get_db
 from app.modules.auth import service as auth_service
 from app.modules.auth.dependencies import get_current_session, get_current_user
@@ -30,13 +35,26 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
+def login(
+    payload: LoginRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> TokenResponse:
+    allowed, retry_after = login_allowed(request, payload.email)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
     try:
         user = auth_service.authenticate_user(db, payload.email, payload.password)
     except AuthError as exc:
+        record_login_failure(request, payload.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
         )
+    record_login_success(request, payload.email)
     session, raw_token = auth_service.create_session(db, user)
     return TokenResponse(
         access_token=raw_token,

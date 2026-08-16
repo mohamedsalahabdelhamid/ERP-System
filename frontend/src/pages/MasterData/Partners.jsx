@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getPartners, createPartner, updatePartner, deletePartner } from '../../api/client';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 export default function Partners() {
+  const { t } = useTranslation();
   const [partners, setPartners] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -40,7 +42,7 @@ export default function Partners() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this partner?')) return;
+    if (!window.confirm(t('partners.delete_partner'))) return;
     try { await deletePartner(id); fetchPartners(); }
     catch (err) { alert(err.response?.data?.detail || 'Error'); }
   };
@@ -51,35 +53,35 @@ export default function Partners() {
     <div>
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
         <div className="tab-bar">
-          <button className={`tab-btn ${filterType === 'all' ? 'active' : ''}`} onClick={() => setFilterType('all')}>All</button>
-          <button className={`tab-btn ${filterType === 'customer' ? 'active' : ''}`} onClick={() => setFilterType('customer')}>Customers</button>
-          <button className={`tab-btn ${filterType === 'supplier' ? 'active' : ''}`} onClick={() => setFilterType('supplier')}>Suppliers</button>
+          <button className={`tab-btn ${filterType === 'all' ? 'active' : ''}`} onClick={() => setFilterType('all')}>{t('partners.all')}</button>
+          <button className={`tab-btn ${filterType === 'customer' ? 'active' : ''}`} onClick={() => setFilterType('customer')}>{t('partners.customers')}</button>
+          <button className={`tab-btn ${filterType === 'supplier' ? 'active' : ''}`} onClick={() => setFilterType('supplier')}>{t('partners.suppliers')}</button>
         </div>
-        <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditingId(null); resetForm(); setShowForm(!showForm); }}>+ Add Partner</button>
+        <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditingId(null); resetForm(); setShowForm(!showForm); }}>{t('partners.add_partner')}</button>
       </div>
 
       {showForm && (
         <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>{editingId ? 'Edit Partner' : 'New Partner'}</h3>
+          <h3 style={{ marginBottom: '1.5rem' }}>{editingId ? t('partners.edit_partner') : t('partners.new_partner')}</h3>
           <form onSubmit={handleSave}>
                 <div className="form-grid">
-                  <div className="form-group"><label>Name</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
-                  <div className="form-group"><label>Code</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('partners.name')}</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('partners.code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
                   <div className="form-group">
-                    <label>Type</label>
+                    <label>{t('partners.type')}</label>
                     <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-                      <option value="customer">Customer</option>
-                      <option value="supplier">Supplier</option>
-                      <option value="both">Both</option>
+                      <option value="customer">{t('partners.customer')}</option>
+                      <option value="supplier">{t('partners.supplier')}</option>
+                      <option value="both">{t('partners.both')}</option>
                     </select>
                   </div>
-                  <div className="form-group"><label>Phone</label><input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
-                  <div className="form-group"><label>Email</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
-                  <div className="form-group" style={{ gridColumn: '1/-1' }}><label>Address</label><textarea value={form.address} onChange={e => setForm({...form, address: e.target.value})} rows={2} /></div>
+                  <div className="form-group"><label>{t('partners.phone')}</label><input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
+                  <div className="form-group"><label>{t('partners.email')}</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
+                  <div className="form-group" style={{ gridColumn: '1/-1' }}><label>{t('partners.address')}</label><textarea value={form.address} onChange={e => setForm({...form, address: e.target.value})} rows={2} /></div>
                 </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Partner'}</button>
-              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? t('common.saving') : t('partners.save_partner')}</button>
+              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => { setShowForm(false); setEditingId(null); }}>{t('common.cancel')}</button>
             </div>
           </form>
         </div>
@@ -87,10 +89,10 @@ export default function Partners() {
 
       <div className="table-container">
         <table>
-          <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Phone</th><th>Email</th><th></th></tr></thead>
+          <thead><tr><th>#</th><th>{t('partners.name')}</th><th>{t('partners.type')}</th><th>{t('partners.phone')}</th><th>{t('partners.email')}</th><th></th></tr></thead>
           <tbody>
             {filtered.length === 0
-              ? <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No partners found</td></tr>
+              ? <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('partners.no_partners')}</td></tr>
               : filtered.map((p, i) => (
                 <tr key={p.id}>
                   <td>{i + 1}</td>
@@ -100,8 +102,8 @@ export default function Partners() {
                   <td>{p.email || '-'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button className="btn" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => startEdit(p)}>Edit</button>
-                      <button className="btn" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleDelete(p.id)}>Delete</button>
+                      <button className="btn" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => startEdit(p)}>{t('partners.edit')}</button>
+                      <button className="btn" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleDelete(p.id)}>{t('partners.delete')}</button>
                     </div>
                   </td>
                 </tr>

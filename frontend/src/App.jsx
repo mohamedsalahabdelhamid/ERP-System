@@ -20,36 +20,37 @@ import StockTakes from './pages/Inventory/StockTakes';
 import SuperAdmin from './pages/SuperAdmin';
 import CompanySettings from './pages/CompanySettings';
 import { getMe, logout } from './api/client';
+import { useTranslation } from './contexts/TranslationContext';
 import './index.css';
 
-const NAV = [
+const getNavConfig = (t) => [
   { section: 'Main', items: [
-    { to: '/', label: 'Dashboard', icon: '📊', end: true },
-    { to: '/pos', label: 'Point of Sale', icon: '🛒' },
+    { to: '/', label: t('common.dashboard'), icon: '📊', end: true },
+    { to: '/pos', label: t('common.pos'), icon: '🛒' },
   ]},
   { section: 'Operations', items: [
-    { to: '/sales', label: 'Sales', icon: '💰' },
-    { to: '/purchases', label: 'Purchases', icon: '📦' },
-    { to: '/inventory', label: 'Inventory', icon: '🏪' },
-    { to: '/stock-takes', label: 'Stock Takes', icon: '🔍' },
-    { to: '/manufacturing', label: 'Manufacturing', icon: '🏭' },
-    { to: '/projects', label: 'Projects', icon: '📐' },
+    { to: '/sales', label: t('common.sales'), icon: '💰' },
+    { to: '/purchases', label: t('common.purchases'), icon: '📦' },
+    { to: '/inventory', label: t('common.inventory'), icon: '🏪' },
+    { to: '/stock-takes', label: t('common.stock_takes'), icon: '🔍' },
+    { to: '/manufacturing', label: t('common.manufacturing'), icon: '🏭' },
+    { to: '/projects', label: t('common.projects'), icon: '📐' },
   ]},
   { section: 'Finance', items: [
-   { to: '/accounting', label: 'Accounting', icon: '📒' },
-   { to: '/payments', label: 'Payments', icon: '💳' },
-   { to: '/reports', label: 'Reports', icon: '📊' },
-   { to: '/currencies', label: 'Currencies & Rates', icon: '💱' },
+   { to: '/accounting', label: t('common.accounting'), icon: '📒' },
+   { to: '/payments', label: t('common.payments'), icon: '💳' },
+   { to: '/reports', label: t('common.reports'), icon: '📊' },
+   { to: '/currencies', label: t('common.currencies'), icon: '💱' },
   ]},
   { section: 'Master Data', items: [
-   { to: '/items', label: 'Items & Products', icon: '🏷️' },
-   { to: '/partners', label: 'Partners', icon: '🤝' },
+   { to: '/items', label: t('common.items_products'), icon: '🏷️' },
+   { to: '/partners', label: t('common.partners'), icon: '🤝' },
   ]},
 ];
 
-const SUPERADMIN_NAV = [
+const getSuperAdminNavConfig = (t) => [
   { section: 'System Administration', items: [
-    { to: '/superadmin', label: 'Super Admin', icon: '⚙️' },
+    { to: '/superadmin', label: t('common.superadmin'), icon: '⚙️' },
   ]},
 ];
 
@@ -57,6 +58,17 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('access_token'));
   const [currentUser, setCurrentUser] = useState(null);
   const location = useLocation();
+  const { t, language, toggleLanguage } = useTranslation();
+  const [theme, setTheme] = useState(localStorage.getItem('erp_theme') || 'dark');
+
+  useEffect(() => {
+    localStorage.setItem('erp_theme', theme);
+    if (theme === 'light') {
+      document.body.classList.add('light-mode');
+    } else {
+      document.body.classList.remove('light-mode');
+    }
+  }, [theme]);
 
   const handleLogin = async () => {
     try {
@@ -83,30 +95,33 @@ export default function App() {
 
   const getTitle = () => {
     const path = location.pathname;
-    if (path === '/') return 'Dashboard';
-    if (path === '/pos') return 'Point of Sale';
-    if (path === '/payments') return 'Payments';
-    if (path === '/sales') return 'Sales Invoices';
-    if (path === '/purchases') return 'Purchase Invoices';
-    if (path === '/inventory') return 'Inventory Management';
-    if (path === '/stock-takes') return 'Stock Takes';
-    if (path === '/manufacturing') return 'Manufacturing';
-    if (path === '/accounting') return 'Accounting & Finance';
-    if (path === '/reports') return 'Reports';
-    if (path === '/currencies') return 'Currencies & Exchange Rates';
-    if (path === '/items') return 'Items & Products';
-    if (path === '/partners') return 'Customers & Suppliers';
-    if (path === '/hr') return 'Human Resources';
-    if (path === '/leave-requests') return 'Leave Requests';
-    if (path === '/projects') return 'Projects & Contracting';
-    if (path === '/superadmin') return 'Super Admin Dashboard';
-    if (path === '/company-settings') return 'Company Settings';
+    if (path === '/') return t('common.dashboard');
+    if (path === '/pos') return t('common.pos');
+    if (path === '/payments') return t('common.payments');
+    if (path === '/sales') return t('common.sales');
+    if (path === '/purchases') return t('common.purchases');
+    if (path === '/inventory') return t('common.inventory');
+    if (path === '/stock-takes') return t('common.stock_takes');
+    if (path === '/manufacturing') return t('common.manufacturing');
+    if (path === '/accounting') return t('common.accounting');
+    if (path === '/reports') return t('common.reports');
+    if (path === '/currencies') return t('common.currencies');
+    if (path === '/items') return t('common.items_products');
+    if (path === '/partners') return t('common.partners');
+    if (path === '/hr') return t('common.hr');
+    if (path === '/leave-requests') return t('common.leave_requests');
+    if (path === '/projects') return t('common.projects');
+    if (path === '/superadmin') return t('common.superadmin');
+    if (path === '/company-settings') return t('common.settings');
     return 'ERP System';
   };
 
   const isSuperUser = currentUser?.is_superuser === true;
 
   if (!isLoggedIn) return <Login onLogin={handleLogin} />;
+
+  const NAV = getNavConfig(t);
+  const SUPERADMIN_NAV = getSuperAdminNavConfig(t);
 
   return (
     <div className="app-container">
@@ -132,10 +147,10 @@ export default function App() {
         ))}
         {/* Company settings link for all users */}
         <div>
-          <div className="nav-section-title">Settings</div>
+          <div className="nav-section-title">{t('common.settings')}</div>
           <nav className="nav-menu">
             <NavLink to="/company-settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-              <span className="nav-icon">🏢</span> Company Settings
+              <span className="nav-icon">🏢</span> {t('common.settings')}
             </NavLink>
           </nav>
         </div>
@@ -154,6 +169,22 @@ export default function App() {
           </div>
         ))}
         <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', padding: '0 0.5rem' }}>
+            <button 
+              onClick={toggleLanguage} 
+              className="tab-btn" 
+              style={{ flex: 1, padding: '0.25rem' }}
+            >
+              🌐 {t('lang.switch')}
+            </button>
+            <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+              className="tab-btn" 
+              style={{ flex: 1, padding: '0.25rem' }}
+            >
+              {theme === 'dark' ? '☀️ ' + t('theme.light') : '🌙 ' + t('theme.dark')}
+            </button>
+          </div>
           {currentUser && (
             <div style={{ padding: '0.5rem 0.875rem', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
               👤 {currentUser.full_name || currentUser.email}
@@ -161,7 +192,7 @@ export default function App() {
             </div>
           )}
           <button className="nav-item" onClick={handleLogout} style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-            <span className="nav-icon">🚪</span> Logout
+            <span className="nav-icon">🚪</span> {t('common.logout')}
           </button>
         </div>
       </aside>
@@ -197,3 +228,4 @@ export default function App() {
     </div>
   );
 }
+

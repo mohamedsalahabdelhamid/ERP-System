@@ -131,4 +131,7 @@ def delete_invoice(
     db: Session = Depends(get_db),
 ) -> None:
     invoice = _get_invoice_or_404(db, company_id, invoice_id)
-    service.delete_invoice(db, invoice)
+    try:
+        service.delete_invoice(db, invoice)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))

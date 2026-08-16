@@ -90,6 +90,18 @@ def test_stock_take_full_flow(client, seeded):
     assert posted.json()["status"] == "posted"
     assert posted.json()["posted_at"] is not None
 
+    # Detail endpoint returns lines with book/counted/diff values.
+    detail = client.get(f"{PREFIX}/stock-takes/{st_id}", headers=h)
+    assert detail.status_code == 200
+    body = detail.json()
+    assert body["warehouse_id"] == wh["id"]
+    assert len(body["lines"]) == 1
+    line = body["lines"][0]
+    assert line["item_id"] == item["id"]
+    assert line["book_qty"] == 100
+    assert line["counted_qty"] == 90
+    assert line["diff_qty"] == -10
+
     stock = client.get(f"{PREFIX}/warehouse-stock", headers=h).json()
     assert stock[0]["quantity"] == 90
 

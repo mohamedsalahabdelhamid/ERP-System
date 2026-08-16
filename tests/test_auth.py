@@ -148,3 +148,47 @@ def test_platform_creates_company_and_owner_creates_branch(client, seeded, super
     )
     assert branch.status_code == 201
     assert branch.json()["company_id"] == company_id
+
+
+def test_create_branch_cannot_target_other_company(client, seeded, seeded_other):
+    """A tenant must not create branches in — or hijack the scope to — a company
+    they have no role in (IDOR on the path company_id)."""
+    token = _login(client, seeded["email"], seeded["password"]).json()["access_token"]
+    headers = _auth_header(token)
+
+    sel = client.post(
+        f"{PREFIX}/auth/select-company",
+        headers=headers,
+        json={"company_id": seeded["company_id"], "branch_id": seeded["branch_id"]},
+    )
+    assert sel.status_code == 200
+
+    resp = client.post(
+        f"{PREFIX}/companies/{seeded_other['company_id']}/branches",
+        headers=headers,
+        json={"name": "Sneaky", "code": "SNK"},
+    )
+    assert resp.status_code == 403
+
+    # Scope must be untouched by the rejected request.
+    me = client.get(f"{PREFIX}/auth/me", headers=headers).json()
+    assert me["scope"]["current_company_id"] == seeded["company_id"]
+
+
+def test_create_branch_in_own_company_still_works(client, seeded):
+    token = _login(client, seeded["email"], seeded["password"]).json()["access_token"]
+    headers = _auth_header(token)
+
+    client.post(
+        f"{PREFIX}/auth/select-company",
+        headers=headers,
+        json={"company_id": seeded["company_id"], "branch_id": seeded["branch_id"]},
+    )
+
+    resp = client.post(
+        f"{PREFIX}/companies/{seeded['company_id']}/branches",
+        headers=headers,
+        json={"name": "Second Branch", "code": "BR2"},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["company_id"] == seeded["company_id"]

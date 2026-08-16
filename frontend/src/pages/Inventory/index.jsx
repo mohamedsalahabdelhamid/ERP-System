@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getStock, getMovements, getWarehouses, createWarehouse, updateWarehouse, deleteWarehouse, getItems } from '../../api/client';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 export default function Inventory() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('stock');
   const [stock, setStock] = useState([]);
   const [movements, setMovements] = useState([]);
@@ -51,34 +53,34 @@ export default function Inventory() {
   };
 
   const handleDeleteWarehouse = async (id) => {
-    if (!window.confirm('Delete this warehouse?')) return;
+    if (!window.confirm(t('inventory.delete_confirm'))) return;
     try { await deleteWarehouse(id); fetchAll(); }
     catch (err) { alert(err.response?.data?.detail || 'Error'); }
   };
 
   const movementTypeLabel = {
-    purchase_in: '📦 Purchase In',
-    sale_out: '🛒 Sale Out',
-    manufacturing_in: '🏭 Mfg In',
-    manufacturing_out: '🏭 Mfg Out',
-    transfer: '🔄 Transfer',
+    purchase_in: `📦 ${t('inventory.m_purchase_in')}`,
+    sale_out: `🛒 ${t('inventory.m_sale_out')}`,
+    manufacturing_in: `🏭 ${t('inventory.m_manufacturing_in')}`,
+    manufacturing_out: `🏭 ${t('inventory.m_manufacturing_out')}`,
+    transfer: `🔄 ${t('inventory.m_transfer')}`,
   };
 
   return (
     <div>
       <div className="tab-bar" style={{ marginBottom: '1.5rem' }}>
-        <button className={`tab-btn ${tab === 'stock' ? 'active' : ''}`} onClick={() => setTab('stock')}>Stock Balance</button>
-        <button className={`tab-btn ${tab === 'movements' ? 'active' : ''}`} onClick={() => setTab('movements')}>Stock Movements</button>
-        <button className={`tab-btn ${tab === 'warehouses' ? 'active' : ''}`} onClick={() => setTab('warehouses')}>Warehouses</button>
+        <button className={`tab-btn ${tab === 'stock' ? 'active' : ''}`} onClick={() => setTab('stock')}>{t('inventory.tab_stock')}</button>
+        <button className={`tab-btn ${tab === 'movements' ? 'active' : ''}`} onClick={() => setTab('movements')}>{t('inventory.tab_movements')}</button>
+        <button className={`tab-btn ${tab === 'warehouses' ? 'active' : ''}`} onClick={() => setTab('warehouses')}>{t('inventory.tab_warehouses')}</button>
       </div>
 
       {tab === 'stock' && (
         <div className="table-container">
           <table>
-            <thead><tr><th>Item</th><th>Warehouse</th><th>Qty in Stock</th><th>Avg Cost</th><th>Total Value</th></tr></thead>
+            <thead><tr><th>{t('inventory.item')}</th><th>{t('inventory.warehouse')}</th><th>{t('inventory.qty_in_stock')}</th><th>{t('inventory.avg_cost')}</th><th>{t('inventory.total_value')}</th></tr></thead>
             <tbody>
               {stock.length === 0
-                ? <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No stock data</td></tr>
+                ? <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('inventory.no_stock')}</td></tr>
                 : stock.map(s => (
                   <tr key={s.id}>
                     <td>{itemName(s.item_id)}</td>
@@ -96,10 +98,10 @@ export default function Inventory() {
       {tab === 'movements' && (
         <div className="table-container">
           <table>
-            <thead><tr><th>Type</th><th>Item</th><th>Warehouse</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Document</th></tr></thead>
+            <thead><tr><th>{t('inventory.type')}</th><th>{t('inventory.item')}</th><th>{t('inventory.warehouse')}</th><th>{t('inventory.qty')}</th><th>{t('inventory.unit_cost')}</th><th>{t('inventory.total')}</th><th>{t('inventory.document')}</th></tr></thead>
             <tbody>
               {movements.length === 0
-                ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No movements</td></tr>
+                ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('inventory.no_movements')}</td></tr>
                 : movements.map(m => (
                   <tr key={m.id}>
                     <td>{movementTypeLabel[m.movement_type] || m.movement_type}</td>
@@ -119,38 +121,38 @@ export default function Inventory() {
       {tab === 'warehouses' && (
         <>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-            <button className="btn btn-primary" onClick={() => { setEditingId(null); resetForm(); setShowForm(!showForm); }}>+ Add Warehouse</button>
+            <button className="btn btn-primary" onClick={() => { setEditingId(null); resetForm(); setShowForm(!showForm); }}>+ {t('inventory.add_warehouse')}</button>
           </div>
           {showForm && (
             <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ marginBottom: '1.5rem' }}>{editingId ? 'Edit Warehouse' : 'New Warehouse'}</h3>
+              <h3 style={{ marginBottom: '1.5rem' }}>{editingId ? t('inventory.edit_warehouse') : t('inventory.new_warehouse')}</h3>
               <form onSubmit={handleSaveWarehouse}>
                 <div className="form-grid">
-                  <div className="form-group"><label>Name</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
-                  <div className="form-group"><label>Code</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('inventory.name')}</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('inventory.code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                  <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Warehouse'}</button>
-                  <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</button>
+                  <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? t('common.saving') : t('inventory.save_warehouse')}</button>
+                  <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => { setShowForm(false); setEditingId(null); }}>{t('common.cancel')}</button>
                 </div>
               </form>
             </div>
           )}
           <div className="table-container">
             <table>
-              <thead><tr><th>Code</th><th>Name</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th>{t('inventory.code')}</th><th>{t('inventory.name')}</th><th>{t('inventory.status')}</th><th></th></tr></thead>
               <tbody>
                 {warehouses.length === 0
-                  ? <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No warehouses yet</td></tr>
+                  ? <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('inventory.no_warehouses')}</td></tr>
                   : warehouses.map(w => (
                     <tr key={w.id}>
                       <td>{w.code}</td>
                       <td>{w.name}</td>
-                      <td><span className={`status-badge ${w.is_active ? 'status-completed' : 'status-pending'}`}>{w.is_active ? 'Active' : 'Inactive'}</span></td>
+                      <td><span className={`status-badge ${w.is_active ? 'status-completed' : 'status-pending'}`}>{w.is_active ? t('inventory.active') : t('inventory.inactive')}</span></td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button className="btn" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => startEdit(w)}>Edit</button>
-                          <button className="btn" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleDeleteWarehouse(w.id)}>Delete</button>
+                          <button className="btn" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => startEdit(w)}>{t('inventory.edit')}</button>
+                          <button className="btn" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleDeleteWarehouse(w.id)}>{t('inventory.delete')}</button>
                         </div>
                       </td>
                     </tr>

@@ -39,8 +39,10 @@ from app.modules.rbac.seed import grant_all_to_role, sync_permissions
 from app.modules.users.models import User
 
 DEMO_COMPANY_CODE = "DEMO"
-ADMIN_EMAIL = "admin@example.com"
-ADMIN_PASSWORD = "admin123"  # noqa: S105 - demo bootstrap credential only
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@example.com")
+# Allow deployments to set a strong admin password; defaults to the demo
+# credential so first-run local bootstrap still works out of the box.
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")  # noqa: S105 - demo bootstrap credential only
 
 # (code, name, account_type) - a minimal, sound chart of accounts.
 DEFAULT_ACCOUNTS = [

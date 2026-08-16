@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { getMe, login, selectCompany } from '../api/client';
+import { useTranslation } from '../contexts/TranslationContext';
 import './Login.css';
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState('admin@example.com');
+  const { t } = useTranslation();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export default function Login({ onLogin }) {
       const me = await getMe();
       const companies = me.data.companies || [];
       if (companies.length === 0) {
-        setError('No company is linked to this account. Create one first.');
+        setError(t('login.no_company'));
         localStorage.removeItem('access_token');
         setLoading(false);
         return;
@@ -35,7 +37,7 @@ export default function Login({ onLogin }) {
         setLoading(false);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Check your credentials.');
+      setError(err.response?.data?.detail || t('login.login_failed'));
       localStorage.removeItem('access_token');
       setLoading(false);
     }
@@ -48,7 +50,7 @@ export default function Login({ onLogin }) {
       if (company.branch_id) localStorage.setItem('branch_id', company.branch_id);
       onLogin();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to select company.');
+      setError(err.response?.data?.detail || t('login.select_failed'));
       localStorage.removeItem('access_token');
       setLoading(false);
     }
@@ -59,8 +61,8 @@ export default function Login({ onLogin }) {
       <div className="login-page">
         <div className="login-bg" />
         <div className="login-card glass-card">
-          <div className="login-brand">ERP System</div>
-          <p className="login-subtitle">Select a workspace</p>
+          <div className="login-brand">{t('login.brand')}</div>
+          <p className="login-subtitle">{t('login.select_workspace')}</p>
           {error && <div className="login-error">{error}</div>}
           <div className="company-list">
             {companies.map((c) => (
@@ -84,20 +86,20 @@ export default function Login({ onLogin }) {
     <div className="login-page">
       <div className="login-bg" />
       <div className="login-card glass-card">
-        <div className="login-brand">ERP System</div>
-        <p className="login-subtitle">Sign in to your workspace</p>
+        <div className="login-brand">{t('login.brand')}</div>
+        <p className="login-subtitle">{t('login.signin_subtitle')}</p>
         {error && <div className="login-error">{error}</div>}
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label>Email Address</label>
+            <label>{t('login.email')}</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label>{t('login.password')}</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
           <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem' }} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('common.signing_in') : t('common.sign_in')}
           </button>
         </form>
       </div>

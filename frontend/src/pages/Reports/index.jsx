@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getSalesSummary, getStockValue, getLowStock, getProjectCosts } from '../../api/client';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 export default function Reports() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('sales');
   const [sales, setSales] = useState(null);
   const [stockValue, setStockValue] = useState(null);
@@ -21,7 +23,9 @@ export default function Reports() {
   }, []);
 
   const loadLowStock = async () => {
-    try { const r = await getLowStock(threshold); setLowStock(r.data || []); } catch { setLowStock([]); }
+    const t = parseFloat(threshold);
+    if (Number.isNaN(t) || t < 0) return;
+    try { const r = await getLowStock(t); setLowStock(r.data || []); } catch { setLowStock([]); }
   };
 
   const loadProjectCosts = async () => {
@@ -32,7 +36,7 @@ export default function Reports() {
     } catch { setProjectCosts([]); setProjectCostTotal(0); }
   };
 
-  useEffect(() => { if (tab === 'low-stock') loadLowStock(); }, [tab, threshold]);
+  useEffect(() => { if (tab === 'low-stock') loadLowStock(); }, [tab]);
   useEffect(() => { if (tab === 'projects') loadProjectCosts(); }, [tab]);
 
   const currency = (n) => `${parseFloat(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -40,25 +44,25 @@ export default function Reports() {
   return (
     <div>
       <div className="tab-bar" style={{ marginBottom: '1.5rem' }}>
-        <button className={`tab-btn ${tab === 'sales' ? 'active' : ''}`} onClick={() => setTab('sales')}>Sales Summary</button>
-        <button className={`tab-btn ${tab === 'stock' ? 'active' : ''}`} onClick={() => setTab('stock')}>Stock Value</button>
-        <button className={`tab-btn ${tab === 'low-stock' ? 'active' : ''}`} onClick={() => setTab('low-stock')}>Low Stock</button>
-        <button className={`tab-btn ${tab === 'projects' ? 'active' : ''}`} onClick={() => setTab('projects')}>Project Costs</button>
+        <button className={`tab-btn ${tab === 'sales' ? 'active' : ''}`} onClick={() => setTab('sales')}>{t('reports.tab_sales')}</button>
+        <button className={`tab-btn ${tab === 'stock' ? 'active' : ''}`} onClick={() => setTab('stock')}>{t('reports.tab_stock')}</button>
+        <button className={`tab-btn ${tab === 'low-stock' ? 'active' : ''}`} onClick={() => setTab('low-stock')}>{t('reports.tab_low_stock')}</button>
+        <button className={`tab-btn ${tab === 'projects' ? 'active' : ''}`} onClick={() => setTab('projects')}>{t('reports.tab_projects')}</button>
       </div>
 
       {tab === 'sales' && sales && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div className="glass-card">
-            <div className="stat-label">Total Invoices</div>
+            <div className="stat-label">{t('reports.total_invoices')}</div>
             <div className="stat-value">{sales.total_invoices}</div>
           </div>
           <div className="glass-card">
-            <div className="stat-label">Grand Total</div>
+            <div className="stat-label">{t('reports.grand_total')}</div>
             <div className="stat-value">{currency(sales.grand_total)}</div>
           </div>
           {(sales.by_status?.confirmed || sales.by_status?.draft) && (
             <div className="glass-card" style={{ gridColumn: '1 / -1' }}>
-              <div className="stat-label">By Status</div>
+              <div className="stat-label">{t('reports.by_status')}</div>
               <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem' }}>
                 {Object.entries(sales.by_status).map(([k, v]) => (
                   <span key={k} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -77,17 +81,17 @@ export default function Reports() {
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             <div className="glass-card">
-              <div className="stat-label">Total Stock Value</div>
-              <div className="stat-value">{currency(stockValue.total_value)}</div>
-            </div>
+            <div className="stat-label">{t('reports.total_stock_value')}</div>
+            <div className="stat-value">{currency(stockValue.total_value)}</div>
+          </div>
             <div className="glass-card">
-              <div className="stat-label">Item Count</div>
+              <div className="stat-label">{t('reports.item_count')}</div>
               <div className="stat-value">{stockValue.item_count}</div>
             </div>
           </div>
           <div className="table-container">
             <table>
-              <thead><tr><th>Warehouse</th><th>Value</th></tr></thead>
+              <thead><tr><th>{t('reports.warehouse')}</th><th>{t('reports.value')}</th></tr></thead>
               <tbody>
                 {Object.entries(stockValue.by_warehouse || {}).map(([name, val]) => (
                   <tr key={name}><td>{name}</td><td>{currency(val)}</td></tr>
@@ -102,17 +106,17 @@ export default function Reports() {
         <div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', marginBottom: '1rem' }}>
             <div className="form-group">
-              <label>Threshold</label>
+              <label>{t('reports.threshold')}</label>
               <input type="number" value={threshold} onChange={e => setThreshold(e.target.value)} style={{ width: '120px' }} />
             </div>
-            <button className="btn btn-primary" onClick={loadLowStock}>Refresh</button>
+            <button className="btn btn-primary" onClick={loadLowStock}>{t('reports.refresh')}</button>
           </div>
           <div className="table-container">
             <table>
-              <thead><tr><th>Code</th><th>Item</th><th>On Hand</th></tr></thead>
+              <thead><tr><th>{t('reports.code')}</th><th>{t('reports.item')}</th><th>{t('reports.on_hand')}</th></tr></thead>
               <tbody>
                 {lowStock.length === 0
-                  ? <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>All items above the threshold</td></tr>
+                  ? <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('reports.all_above')}</td></tr>
                   : lowStock.map(s => (
                     <tr key={s.item_id}>
                       <td>{s.code}</td>
@@ -130,20 +134,20 @@ export default function Reports() {
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             <div className="glass-card">
-              <div className="stat-label">Total Project Cost</div>
-              <div className="stat-value">{currency(projectCostTotal)}</div>
-            </div>
+            <div className="stat-label">{t('reports.total_project_cost')}</div>
+            <div className="stat-value">{currency(projectCostTotal)}</div>
+          </div>
             <div className="glass-card">
-              <div className="stat-label">Projects</div>
+              <div className="stat-label">{t('reports.projects')}</div>
               <div className="stat-value">{projectCosts.length}</div>
             </div>
           </div>
           <div className="table-container">
             <table>
-              <thead><tr><th>Project</th><th>Status</th><th>Total Cost</th></tr></thead>
+              <thead><tr><th>{t('reports.project')}</th><th>{t('reports.status')}</th><th>{t('reports.total_cost')}</th></tr></thead>
               <tbody>
                 {projectCosts.length === 0
-                  ? <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No projects yet</td></tr>
+                  ? <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('reports.no_projects')}</td></tr>
                   : projectCosts.map((p, i) => (
                     <tr key={i}>
                       <td>{p.name}</td>

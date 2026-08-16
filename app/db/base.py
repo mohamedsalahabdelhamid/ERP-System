@@ -37,3 +37,6 @@ from app.modules.projects.models import Project, ProjectCostLine  # noqa: F401
 
 # ---- POS ----
 from app.modules.pos.models import PosSession, PosOrder, PosOrderLine  # noqa: F401
+
+# ---- Payments ----
+from app.modules.payments.models import Payment  # noqa: F401

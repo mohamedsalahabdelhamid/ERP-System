@@ -198,4 +198,5 @@ def _post_fx_entry(
             notes="FX gain/loss on settlement",
             lines=lines,
         ),
+        commit=False,
     )

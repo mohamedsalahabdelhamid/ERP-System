@@ -140,6 +140,8 @@ def create_order(
     order_number = f"POS-{session.id}-{seq}"
 
     # Post a confirmed sales invoice for full back-office traceability.
+    # commit=False keeps everything (invoice, stock, journal, POS order,
+    # payment) inside this single transaction — committed once below.
     invoice = sales_service.create_invoice(
         db,
         company_id,
@@ -159,8 +161,9 @@ def create_order(
                 for line in data.lines
             ],
         ),
+        commit=False,
     )
-    invoice = sales_service.confirm_invoice(db, invoice)
+    invoice = sales_service.confirm_invoice(db, invoice, commit=False)
 
     order = PosOrder(
         company_id=company_id,

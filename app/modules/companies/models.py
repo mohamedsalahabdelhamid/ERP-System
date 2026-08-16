@@ -12,6 +12,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     UniqueConstraint,
 )
@@ -101,7 +102,7 @@ class CompanySettings(TimestampMixin, Base):
     # Default threshold below which stock-alert emails are triggered.
     # Individual items can override this via min_stock_level on the Item model.
     low_stock_threshold: Mapped[float] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
+        Numeric(12, 4), nullable=False, default=0, server_default="0"
     )
     # Comma-separated list of emails to notify on low/zero stock.
     alert_emails: Mapped[Optional[str]] = mapped_column(

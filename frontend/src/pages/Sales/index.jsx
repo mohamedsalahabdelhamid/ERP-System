@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getSalesInvoices, createSalesInvoice, confirmSalesInvoice, deleteSalesInvoice, getPartners, getItems } from '../../api/client';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 export default function Sales() {
+  const { t } = useTranslation();
   const [invoices, setInvoices] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [partners, setPartners] = useState([]);
@@ -40,19 +42,19 @@ export default function Sales() {
       setShowForm(false);
       setForm({ partner_id: '', number: '', date: new Date().toISOString().split('T')[0], currency_code: 'USD', fx_rate: 1, lines: [{ item_id: '', quantity: 1, unit_price: 0, description: '' }] });
       fetchAll();
-    } catch (err) { alert(err.response?.data?.detail || 'Error creating invoice'); }
+    } catch (err) { alert(err.response?.data?.detail || t('sales.create_fail')); }
     finally { setLoading(false); }
   };
 
   const handleConfirm = async (id) => {
     try { await confirmSalesInvoice(id); fetchAll(); }
-    catch (err) { alert(err.response?.data?.detail || 'Error confirming invoice'); }
+    catch (err) { alert(err.response?.data?.detail || t('sales.confirm_fail')); }
   };
 
   const handleDelete = async (id, number) => {
-    if (!window.confirm(`Delete draft invoice ${number}?`)) return;
+    if (!window.confirm(t('sales.delete_draft', { number }))) return;
     try { await deleteSalesInvoice(id); fetchAll(); }
-    catch (err) { alert(err.response?.data?.detail || 'Error deleting invoice'); }
+    catch (err) { alert(err.response?.data?.detail || t('sales.delete_fail')); }
   };
 
   const fmt = (inv) => `${parseFloat(inv.total_amount || 0).toFixed(2)} ${inv.currency_code || 'USD'}`;
@@ -61,63 +63,63 @@ export default function Sales() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>+ New Sales Invoice</button>
+        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>+ {t('sales.new_invoice')}</button>
       </div>
 
       {showForm && (
         <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>New Sales Invoice</h3>
+          <h3 style={{ marginBottom: '1.5rem' }}>{t('sales.new_invoice')}</h3>
           <form onSubmit={handleCreate}>
             <div className="form-grid">
-              <div className="form-group"><label>Invoice No</label><input value={form.number} onChange={e => setForm({...form, number: e.target.value})} required /></div>
-              <div className="form-group"><label>Date</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required /></div>
+              <div className="form-group"><label>{t('sales.invoice_no')}</label><input value={form.number} onChange={e => setForm({...form, number: e.target.value})} required /></div>
+              <div className="form-group"><label>{t('sales.date')}</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required /></div>
               <div className="form-group">
-                <label>Customer</label>
+                <label>{t('sales.customer')}</label>
                 <select value={form.partner_id} onChange={e => setForm({...form, partner_id: e.target.value})} required>
-                  <option value="">-- Select Customer --</option>
+                  <option value="">{t('sales.select_customer')}</option>
                   {partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
-              <div className="form-group"><label>Currency</label><input value={form.currency_code} onChange={e => setForm({...form, currency_code: e.target.value})} /></div>
-              <div className="form-group"><label>FX Rate</label><input type="number" step="0.0001" value={form.fx_rate} onChange={e => setForm({...form, fx_rate: e.target.value})} /></div>
+              <div className="form-group"><label>{t('sales.currency')}</label><input value={form.currency_code} onChange={e => setForm({...form, currency_code: e.target.value})} /></div>
+              <div className="form-group"><label>{t('sales.fx_rate')}</label><input type="number" step="0.0001" value={form.fx_rate} onChange={e => setForm({...form, fx_rate: e.target.value})} /></div>
             </div>
 
-            <h4 style={{ margin: '1.5rem 0 1rem' }}>Invoice Lines</h4>
+            <h4 style={{ margin: '1.5rem 0 1rem' }}>{t('sales.invoice_lines')}</h4>
             {form.lines.map((line, i) => (
               <div key={i} className="invoice-line">
                 <div className="form-group" style={{ flex: 2 }}>
-                  <label>Item</label>
+                  <label>{t('sales.item')}</label>
                   <select value={line.item_id} onChange={e => updateLine(i, 'item_id', e.target.value)} required>
-                    <option value="">-- Item --</option>
+                    <option value="">-- {t('sales.item')} --</option>
                     {items.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
-                  <label>Description</label>
+                  <label>{t('sales.description')}</label>
                   <input value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} />
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
-                  <label>Qty</label>
+                  <label>{t('sales.qty')}</label>
                   <input type="number" min="0.01" step="0.01" value={line.quantity} onChange={e => updateLine(i, 'quantity', e.target.value)} />
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
-                  <label>Price</label>
+                  <label>{t('sales.price')}</label>
                   <input type="number" min="0" step="0.01" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', e.target.value)} />
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
-                  <label>Total</label>
+                  <label>{t('sales.total')}</label>
                   <div style={{ padding: '0.75rem 0', fontWeight: 600 }}>${(parseFloat(line.quantity||0)*parseFloat(line.unit_price||0)).toFixed(2)}</div>
                 </div>
                 {form.lines.length > 1 && <button type="button" className="remove-btn" style={{ marginTop: '1.5rem' }} onClick={() => removeLine(i)}>×</button>}
               </div>
             ))}
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
-              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.08)' }} onClick={addLine}>+ Add Line</button>
-              <div style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '1.25rem' }}>Total: ${total.toFixed(2)}</div>
+              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.08)' }} onClick={addLine}>{t('sales.add_line')}</button>
+              <div style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '1.25rem' }}>{t('sales.total_label', { amount: `$${total.toFixed(2)}` })}</div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Create Invoice'}</button>
-              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? t('common.saving') : t('sales.create_invoice')}</button>
+              <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => setShowForm(false)}>{t('common.cancel')}</button>
             </div>
           </form>
         </div>
@@ -125,27 +127,27 @@ export default function Sales() {
 
       <div className="table-container">
         <table>
-          <thead><tr><th>Invoice No</th><th>Date</th><th>Customer</th><th>Currency</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+          <thead><tr><th>{t('sales.invoice_no_col')}</th><th>{t('sales.date')}</th><th>{t('sales.customer_col')}</th><th>{t('sales.currency')}</th><th>{t('sales.total')}</th><th>{t('sales.status')}</th><th>{t('sales.action')}</th></tr></thead>
           <tbody>
             {invoices.length === 0
-              ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>No invoices found</td></tr>
+              ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('sales.no_invoices')}</td></tr>
               : invoices.map(inv => (
                 <tr key={inv.id}>
                   <td>{inv.number}</td>
                   <td>{inv.date}</td>
-                  <td>{partners.find(p => p.id === inv.partner_id)?.name || `Customer #${inv.partner_id}`}</td>
+                  <td>{partners.find(p => p.id === inv.partner_id)?.name || t('sales.customer_id', { id: inv.partner_id })}</td>
                   <td>{inv.currency_code || 'USD'} (fx {parseFloat(inv.fx_rate || 1).toFixed(4)})</td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{fmt(inv)}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{fmtBase(inv)}</div>
                   </td>
-                  <td><span className={`status-badge ${inv.is_confirmed ? 'status-completed' : 'status-pending'}`}>{inv.is_confirmed ? 'Confirmed' : 'Draft'}</span></td>
+                  <td><span className={`status-badge ${inv.is_confirmed ? 'status-completed' : 'status-pending'}`}>{inv.is_confirmed ? t('sales.confirmed') : t('sales.draft')}</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       {!inv.is_confirmed && (
                         <>
-                          <button className="btn btn-primary" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleConfirm(inv.id)}>Confirm</button>
-                          <button className="btn" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleDelete(inv.id, inv.number)}>Delete</button>
+                          <button className="btn btn-primary" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleConfirm(inv.id)}>{t('sales.confirm')}</button>
+                          <button className="btn" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleDelete(inv.id, inv.number)}>{t('sales.delete')}</button>
                         </>
                       )}
                     </div>

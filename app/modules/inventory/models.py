@@ -20,7 +20,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 from app.db.mixins import TimestampMixin
@@ -119,6 +119,12 @@ class StockTake(TimestampMixin, Base):
     posted_at: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     note: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
+    lines: Mapped[list["StockTakeLine"]] = relationship(
+        back_populates="stock_take",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
 
 class StockTakeLine(TimestampMixin, Base):
     __tablename__ = "stock_take_lines"
@@ -140,3 +146,5 @@ class StockTakeLine(TimestampMixin, Base):
     adjustment_value: Mapped[float] = mapped_column(
         Numeric(18, 4), nullable=False, default=0
     )
+
+    stock_take: Mapped["StockTake"] = relationship(back_populates="lines")
