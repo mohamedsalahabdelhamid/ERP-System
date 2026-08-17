@@ -51,6 +51,4 @@ backups/
 app.db
 app.db-journal
 
-# Generated PDFs
-docs/*.pdf
 
