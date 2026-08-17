@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.manufacturing.models import BOM, BOMLine, WorkOrder, WorkOrderConsumption, WorkOrderLabor, WorkOrderOverhead, WorkOrderOutput
 from app.modules.manufacturing.schemas import BOMCreate, WorkOrderCreate, WorkOrderLaborCreate, WorkOrderOverheadCreate
 from app.modules.inventory.models import InventoryMovement, WarehouseStock
@@ -30,14 +31,26 @@ def create_bom(db: Session, company_id: int, data: BOMCreate) -> BOM:
     db.refresh(bom)
     return bom
 
+def work_order_number_exists(db: Session, company_id: int, number: str) -> bool:
+    stmt = select(WorkOrder.id).where(
+        WorkOrder.company_id == company_id, WorkOrder.number == number
+    )
+    return db.scalar(stmt.limit(1)) is not None
+
+
 def create_work_order(db: Session, company_id: int, data: WorkOrderCreate) -> WorkOrder:
+    values = data.model_dump()
+    if not values.get("number"):
+        values["number"] = generate_code(
+            db, company_id, "work_order", "WO", WorkOrder, "number"
+        )
     wo = WorkOrder(
         company_id=company_id,
-        number=data.number,
-        bom_id=data.bom_id,
-        item_id=data.item_id,
-        warehouse_id=data.warehouse_id,
-        planned_quantity=data.planned_quantity,
+        number=values["number"],
+        bom_id=values.get("bom_id"),
+        item_id=values["item_id"],
+        warehouse_id=values["warehouse_id"],
+        planned_quantity=values["planned_quantity"],
         status="draft"
     )
     db.add(wo)

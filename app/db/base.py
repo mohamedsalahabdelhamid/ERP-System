@@ -5,6 +5,9 @@ Every ORM model must be imported here so that ``Base.metadata`` sees it.
 
 from app.db.base_class import Base  # noqa: F401
 
+# ---- Cross-company infrastructure ----
+from app.db.numbering import NumberingSequence  # noqa: F401
+
 # ---- Phase 1: Multi-Company Core & Auth ----
 from app.modules.companies.models import Branch, Company, CompanySettings  # noqa: F401
 from app.modules.users.models import User  # noqa: F401

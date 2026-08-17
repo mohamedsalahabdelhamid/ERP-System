@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.projects.models import Project, ProjectCostLine
 from app.modules.projects.schemas import ProjectCreate, ProjectCostLineCreate
 from app.modules.accounting.service import get_or_create_default_account, create_journal_entry
@@ -15,15 +16,25 @@ def get_project(db: Session, company_id: int, project_id: int) -> Project | None
     return db.scalar(select(Project).where(Project.id == project_id, Project.company_id == company_id))
 
 
+def project_code_exists(db: Session, company_id: int, code: str) -> bool:
+    stmt = select(Project.id).where(
+        Project.company_id == company_id, Project.code == code
+    )
+    return db.scalar(stmt.limit(1)) is not None
+
+
 def create_project(db: Session, company_id: int, data: ProjectCreate) -> Project:
+    values = data.model_dump()
+    if not values.get("code"):
+        values["code"] = generate_code(db, company_id, "project", "PRJ", Project, "code")
     proj = Project(
         company_id=company_id,
-        code=data.code,
-        name=data.name,
-        partner_id=data.partner_id,
-        start_date=data.start_date,
-        end_date=data.end_date,
-        contract_value=data.contract_value,
+        code=values["code"],
+        name=values["name"],
+        partner_id=values.get("partner_id"),
+        start_date=values.get("start_date"),
+        end_date=values.get("end_date"),
+        contract_value=values.get("contract_value", 0.0),
         status="active"
     )
     db.add(proj)

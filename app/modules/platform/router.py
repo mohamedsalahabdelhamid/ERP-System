@@ -18,6 +18,7 @@ from app.modules.platform import service
 from app.modules.platform.schemas import (
     CompanyUserCreate,
     CompanyUserRead,
+    DeleteTenantRequest,
     ModuleInfo,
     PasswordChangeRequest,
     PlatformCompanyCreate,
@@ -128,5 +129,15 @@ def reset_user_password(
 ) -> None:
     try:
         service.change_user_password(db, user_id, data.new_password)
+    except service.PlatformError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.delete("/companies/{company_id}", status_code=204)
+def delete_tenant(
+    company_id: int, data: DeleteTenantRequest, db=Depends(get_db)
+) -> None:
+    try:
+        service.delete_company(db, company_id, data.confirm_code)
     except service.PlatformError as exc:
         raise HTTPException(status_code=400, detail=str(exc))

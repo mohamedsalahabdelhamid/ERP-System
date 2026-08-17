@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.modules.companies.schemas import CompanyRead
 
@@ -43,3 +43,7 @@ class MeResponse(BaseModel):
     user: UserRead
     scope: SessionScope
     companies: list[CompanyRead]
+    is_superuser: bool = False
+    full_name: str = ""
+    email: str = ""
+    permissions: list[str] = Field(default_factory=list)

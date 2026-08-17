@@ -110,7 +110,7 @@ def update_currency(
 @currencies_router.delete(
     "/{currency_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("currencies.manage"))],
+    dependencies=[Depends(require_permission("currencies.delete"))],
 )
 def delete_currency(
     currency_id: int,
@@ -200,7 +200,7 @@ def update_rate(
 @rates_router.delete(
     "/{rate_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("currency_rates.manage"))],
+    dependencies=[Depends(require_permission("currency_rates.delete"))],
 )
 def delete_rate(
     rate_id: int,

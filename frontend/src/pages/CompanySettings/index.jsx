@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../../api/client';
+import api, { clearCompanyData, getMe, getCurrentCompany } from '../../api/client';
 import { useTranslation } from '../../contexts/TranslationContext';
 
 const getSettings = () => api.get('/companies/settings');
@@ -16,9 +16,15 @@ export default function CompanySettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [dangerConfirm, setDangerConfirm] = useState('');
+  const [dangerLoading, setDangerLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [companyInfo, setCompanyInfo] = useState(null);
 
   useEffect(() => {
     fetchSettings();
+    getMe().then(r => setCurrentUser(r.data)).catch(() => {});
+    getCurrentCompany().then(r => setCompanyInfo(r.data)).catch(() => {});
   }, []);
 
   const fetchSettings = async () => {
@@ -65,6 +71,23 @@ export default function CompanySettings() {
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>{t('companysettings.loading')}</div>;
   }
+
+  const hasDeletePermission = currentUser?.permissions?.includes('companies.delete_data');
+
+  const handleClearData = async () => {
+    if (!dangerConfirm.trim()) { showToast(t('companysettings.danger_enter_code'), 'error'); return; }
+    if (!window.confirm(t('companysettings.danger_confirm_prompt'))) return;
+    setDangerLoading(true);
+    try {
+      await clearCompanyData(dangerConfirm);
+      setDangerConfirm('');
+      showToast(`✅ ${t('companysettings.danger_success')}`, 'success');
+      fetchSettings();
+      getCurrentCompany().then(r => setCompanyInfo(r.data)).catch(() => {});
+    } catch (err) {
+      showToast(err.response?.data?.detail || t('companysettings.danger_failed'), 'error');
+    } finally { setDangerLoading(false); }
+  };
 
   return (
     <div>
@@ -235,6 +258,49 @@ SMTP_FROM=noreply@yourcompany.com
 SMTP_FROM_NAME="ERP System"`}
           </pre>
         </div>
+
+        {/* Danger Zone */}
+        {hasDeletePermission && (
+          <div className="glass-card" style={{
+            borderColor: 'rgba(239,68,68,0.4)',
+            background: 'rgba(239,68,68,0.04)',
+          }}>
+            <h4 style={{ marginBottom: '0.5rem', color: 'var(--danger)', fontSize: '1rem' }}>
+              🗑️ {t('companysettings.danger_title')}
+            </h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.65, marginBottom: '1rem' }}>
+              {t('companysettings.danger_desc')}
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'end' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label style={{ color: 'var(--danger)' }}>{t('companysettings.danger_enter_code')}</label>
+                <input
+                  value={dangerConfirm}
+                  onChange={e => setDangerConfirm(e.target.value)}
+                  placeholder={companyInfo?.code || 'DEMO'}
+                  style={{
+                    borderColor: 'rgba(239,68,68,0.3)',
+                    background: 'rgba(239,68,68,0.05)',
+                  }}
+                />
+              </div>
+              <button
+                className="btn"
+                style={{
+                  background: 'rgba(239,68,68,0.15)',
+                  color: '#f87171',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  padding: '0.5rem 1.5rem',
+                  marginBottom: '4px',
+                }}
+                onClick={handleClearData}
+                disabled={dangerLoading}
+              >
+                {dangerLoading ? t('companysettings.saving') : `🗑️ ${t('companysettings.danger_button')}`}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -10,7 +10,8 @@ ItemType = Literal["stock", "service", "manufactured"]
 # ---- Item categories ----
 class ItemCategoryCreate(BaseModel):
     name: str
-    code: str
+    # Optional: auto-generated per company when omitted (CAT-###).
+    code: Optional[str] = None
     parent_id: Optional[int] = None
     is_active: bool = True
 
@@ -36,7 +37,8 @@ class ItemCategoryRead(BaseModel):
 # ---- Units ----
 class UnitCreate(BaseModel):
     name: str
-    code: str
+    # Optional: auto-generated per company when omitted (UNIT-###).
+    code: Optional[str] = None
     symbol: Optional[str] = None
     unit_type: Optional[str] = None
     is_active: bool = True
@@ -91,7 +93,8 @@ class UnitConversionRead(BaseModel):
 # ---- Items ----
 class ItemCreate(BaseModel):
     name: str
-    code: str
+    # Optional: auto-generated per company when omitted (ITM-###).
+    code: Optional[str] = None
     barcode: Optional[str] = None
     item_category_id: Optional[int] = None
     base_unit_id: Optional[int] = None

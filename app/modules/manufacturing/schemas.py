@@ -16,7 +16,8 @@ class BOMCreate(BaseModel):
 
 
 class WorkOrderCreate(BaseModel):
-    number: str = Field(..., min_length=1)
+    # Optional: auto-generated per company when omitted (WO-###).
+    number: Optional[str] = None
     bom_id: Optional[int] = None
     item_id: int
     warehouse_id: int

@@ -66,7 +66,7 @@ export default function Payments() {
                   {partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
-              <div className="form-group"><label>{t('payments.reference')}</label><input value={form.reference} onChange={e => setForm({...form, reference: e.target.value})} required /></div>
+              <div className="form-group"><label>{t('payments.reference')}</label><input value={form.reference} onChange={e => setForm({...form, reference: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
               <div className="form-group"><label>{t('payments.amount')}</label><input type="number" min="0" step="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required /></div>
               <div className="form-group"><label>{t('payments.currency')}</label><input value={form.currency_code} onChange={e => setForm({...form, currency_code: e.target.value})} /></div>
               <div className="form-group">

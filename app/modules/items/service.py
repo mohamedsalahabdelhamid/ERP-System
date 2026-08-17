@@ -10,6 +10,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.items.models import Item, ItemCategory, Unit, UnitConversion
 from app.modules.items.schemas import (
     ItemCategoryCreate,
@@ -56,7 +57,12 @@ def category_code_exists(
 def create_category(
     db: Session, company_id: int, data: ItemCategoryCreate
 ) -> ItemCategory:
-    category = ItemCategory(company_id=company_id, **data.model_dump())
+    values = data.model_dump()
+    if not values.get("code"):
+        values["code"] = generate_code(
+            db, company_id, "item_category", "CAT", ItemCategory, "code"
+        )
+    category = ItemCategory(company_id=company_id, **values)
     db.add(category)
     db.commit()
     db.refresh(category)
@@ -99,7 +105,10 @@ def unit_code_exists(
 
 
 def create_unit(db: Session, company_id: int, data: UnitCreate) -> Unit:
-    unit = Unit(company_id=company_id, **data.model_dump())
+    values = data.model_dump()
+    if not values.get("code"):
+        values["code"] = generate_code(db, company_id, "unit", "UNIT", Unit, "code")
+    unit = Unit(company_id=company_id, **values)
     db.add(unit)
     db.commit()
     db.refresh(unit)
@@ -239,7 +248,10 @@ def invalid_references(db: Session, company_id: int, data: dict) -> Optional[str
 
 
 def create_item(db: Session, company_id: int, data: ItemCreate) -> Item:
-    item = Item(company_id=company_id, **data.model_dump())
+    values = data.model_dump()
+    if not values.get("code"):
+        values["code"] = generate_code(db, company_id, "item", "ITM", Item, "code")
+    item = Item(company_id=company_id, **values)
     db.add(item)
     db.commit()
     db.refresh(item)

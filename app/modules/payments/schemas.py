@@ -5,7 +5,8 @@ from pydantic import BaseModel, Field
 
 class PaymentCreate(BaseModel):
     partner_id: int
-    reference: str = Field(..., min_length=1)
+    # Optional: auto-generated per company when omitted (PAY-###).
+    reference: Optional[str] = None
     document_type: str = "invoice"
     document_id: int = 0
     payment_date: Optional[str] = None

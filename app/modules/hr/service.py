@@ -1,6 +1,7 @@
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.hr.models import Department, Employee, AttendanceRecord, PayrollRun, PayrollLine, LeaveRequest
 from app.modules.hr.schemas import DepartmentCreate, EmployeeCreate, AttendanceCreate, PayrollRunCreate, LeaveRequestCreate
 from app.modules.accounting.service import get_or_create_default_account, create_journal_entry
@@ -23,15 +24,30 @@ def list_employees(db: Session, company_id: int) -> list[Employee]:
     return list(db.scalars(select(Employee).where(Employee.company_id == company_id)).all())
 
 
+def employee_number_exists(
+    db: Session, company_id: int, employee_number: str
+) -> bool:
+    stmt = select(Employee.id).where(
+        Employee.company_id == company_id,
+        Employee.employee_number == employee_number,
+    )
+    return db.scalar(stmt.limit(1)) is not None
+
+
 def create_employee(db: Session, company_id: int, data: EmployeeCreate) -> Employee:
+    values = data.model_dump()
+    if not values.get("employee_number"):
+        values["employee_number"] = generate_code(
+            db, company_id, "employee", "EMP", Employee, "employee_number"
+        )
     emp = Employee(
         company_id=company_id,
-        department_id=data.department_id,
-        employee_number=data.employee_number,
-        name=data.name,
-        position=data.position,
-        hire_date=data.hire_date,
-        basic_salary=data.basic_salary
+        department_id=values.get("department_id"),
+        employee_number=values["employee_number"],
+        name=values["name"],
+        position=values.get("position"),
+        hire_date=values.get("hire_date"),
+        basic_salary=values.get("basic_salary", 0.0),
     )
     db.add(emp)
     db.commit()

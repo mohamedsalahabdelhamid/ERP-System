@@ -66,7 +66,7 @@ export default function Partners() {
           <form onSubmit={handleSave}>
                 <div className="form-grid">
                   <div className="form-group"><label>{t('partners.name')}</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
-                  <div className="form-group"><label>{t('partners.code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('partners.code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
                   <div className="form-group">
                     <label>{t('partners.type')}</label>
                     <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}>

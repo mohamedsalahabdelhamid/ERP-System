@@ -151,7 +151,7 @@ export default function MasterData() {
               <form onSubmit={handleSaveItem}>
                 <div className="form-grid">
                   <div className="form-group"><label>{t('masterdata.item_name')}</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
-                  <div className="form-group"><label>{t('masterdata.item_code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('masterdata.item_code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
                   <div className="form-group">
                     <label>{t('masterdata.type')}</label>
                     <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}>

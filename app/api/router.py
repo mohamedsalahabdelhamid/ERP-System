@@ -15,6 +15,7 @@ from app.modules.partners.router import router as partners_router
 from app.modules.payments.router import router as payments_router
 from app.modules.pos.router import router as pos_router
 from app.modules.purchases.router import router as purchases_router
+from app.modules.rbac.router import router as rbac_router
 from app.modules.sales.router import router as sales_router
 from app.modules.accounting.router import router as accounting_router
 from app.modules.hr.router import router as hr_router
@@ -27,6 +28,7 @@ api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(auth_router)
 api_router.include_router(companies_router)
+api_router.include_router(rbac_router)
 api_router.include_router(platform_router)
 
 # ---- Phase 3: Master Data ----

@@ -8,7 +8,8 @@ from pydantic import BaseModel, ConfigDict
 # ---- Warehouses (full CRUD) ----
 class WarehouseCreate(BaseModel):
     name: str
-    code: str
+    # Optional: auto-generated per company when omitted (WH-###).
+    code: Optional[str] = None
     branch_id: Optional[int] = None
     address: Optional[str] = None
     is_active: bool = True
@@ -71,7 +72,8 @@ class StockTakeLineCreate(BaseModel):
 
 class StockTakeCreate(BaseModel):
     warehouse_id: int
-    reference: str
+    # Optional: auto-generated per company when omitted (ST-###).
+    reference: Optional[str] = None
     note: Optional[str] = None
     lines: list[StockTakeLineCreate] = []
 

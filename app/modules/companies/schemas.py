@@ -15,7 +15,8 @@ class CompanyCreate(BaseModel):
 
 class BranchCreate(BaseModel):
     name: str
-    code: str
+    # Optional: auto-generated per company when omitted (BR-###).
+    code: Optional[str] = None
     is_active: bool = True
 
 
@@ -40,6 +41,7 @@ class CompanyRead(BaseModel):
     base_currency: str
     activity_type: str
     is_active: bool
+    branch_id: Optional[int] = None
 
 
 class CompanySettingsRead(BaseModel):

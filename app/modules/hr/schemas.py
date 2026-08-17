@@ -13,7 +13,8 @@ class DepartmentRead(DepartmentCreate):
 
 class EmployeeCreate(BaseModel):
     department_id: Optional[int] = None
-    employee_number: str = Field(..., min_length=1)
+    # Optional: auto-generated per company when omitted (EMP-###).
+    employee_number: Optional[str] = None
     name: str = Field(..., min_length=1)
     position: Optional[str] = None
     hire_date: Optional[str] = None

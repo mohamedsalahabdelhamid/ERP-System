@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import ForeignKey, Integer, Numeric, String
+from sqlalchemy import ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base_class import Base
@@ -22,6 +22,11 @@ class Account(TimestampMixin, Base):
 
 class JournalEntry(TimestampMixin, Base):
     __tablename__ = "journal_entries"
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id", "reference", name="uq_journal_entries_company_reference"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[int] = mapped_column(

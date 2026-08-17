@@ -14,7 +14,8 @@ class AccountRead(AccountCreate):
 
 
 class JournalEntryCreate(BaseModel):
-    reference: str = Field(..., min_length=1)
+    # Optional: auto-generated per company when omitted (JE-###).
+    reference: Optional[str] = None
     entry_date: Optional[str] = None
     notes: Optional[str] = None
     lines: list["JournalLineCreate"] = []

@@ -8,7 +8,13 @@ from app.api.deps import (
     require_permission,
 )
 from app.modules.accounting.schemas import AccountCreate, AccountRead, JournalEntryCreate, JournalEntryRead
-from app.modules.accounting.service import create_account, create_journal_entry, list_accounts, list_journal_entries
+from app.modules.accounting.service import (
+    create_account,
+    create_journal_entry,
+    journal_entry_reference_exists,
+    list_accounts,
+    list_journal_entries,
+)
 from app.modules.accounting.reports import get_trial_balance, get_income_statement, get_balance_sheet
 
 router = APIRouter(
@@ -52,6 +58,11 @@ def create_journal_entry_endpoint(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> JournalEntryRead:
+    if data.reference and journal_entry_reference_exists(db, company_id, data.reference):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Journal reference '{data.reference}' already exists in this company.",
+        )
     try:
         return create_journal_entry(db, company_id, data)
     except ValueError as exc:

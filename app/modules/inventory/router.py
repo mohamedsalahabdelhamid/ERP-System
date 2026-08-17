@@ -90,7 +90,7 @@ def create_warehouse(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> Warehouse:
-    if service.warehouse_code_exists(db, company_id, data.code):
+    if data.code and service.warehouse_code_exists(db, company_id, data.code):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Warehouse code '{data.code}' already exists in this company.",
@@ -136,7 +136,7 @@ def update_warehouse(
 @warehouses_router.delete(
     "/{warehouse_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("warehouses.manage"))],
+    dependencies=[Depends(require_permission("warehouses.delete"))],
 )
 def delete_warehouse(
     warehouse_id: int,
@@ -216,6 +216,13 @@ def create_stock_take(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ):
+    if data.reference and service.stock_take_reference_exists(
+        db, company_id, data.reference
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Stock take reference '{data.reference}' already exists in this company.",
+        )
     try:
         return service.create_stock_take(db, company_id, user.id, data)
     except ValueError as exc:

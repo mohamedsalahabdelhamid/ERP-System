@@ -3,7 +3,11 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_company_id, get_db, require_permission
 from app.modules.payments.schemas import PaymentCreate, PaymentRead
-from app.modules.payments.service import create_payment, list_payments
+from app.modules.payments.service import (
+    create_payment,
+    list_payments,
+    payment_reference_exists,
+)
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -22,6 +26,11 @@ def create_payment_endpoint(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> PaymentRead:
+    if data.reference and payment_reference_exists(db, company_id, data.reference):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Payment reference '{data.reference}' already exists in this company.",
+        )
     try:
         return create_payment(db, company_id, data)
     except ValueError as exc:

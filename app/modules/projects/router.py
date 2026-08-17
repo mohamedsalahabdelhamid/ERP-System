@@ -8,7 +8,7 @@ from app.api.deps import (
     require_permission,
 )
 from app.modules.projects.schemas import ProjectCreate, ProjectRead, ProjectCostLineCreate, ProjectCostLineRead
-from app.modules.projects.service import list_projects, create_project, add_cost_line, complete_project
+from app.modules.projects.service import list_projects, create_project, add_cost_line, complete_project, project_code_exists
 
 router = APIRouter(
     prefix="/projects",
@@ -24,6 +24,11 @@ def list_projects_ep(company_id: int = Depends(get_current_company_id), db: Sess
 
 @router.post("/", response_model=ProjectRead, status_code=201, dependencies=[Depends(require_permission("projects.manage"))])
 def create_project_ep(data: ProjectCreate, company_id: int = Depends(get_current_company_id), db: Session = Depends(get_db)):
+    if data.code and project_code_exists(db, company_id, data.code):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Project code '{data.code}' already exists in this company.",
+        )
     return create_project(db, company_id, data)
 
 

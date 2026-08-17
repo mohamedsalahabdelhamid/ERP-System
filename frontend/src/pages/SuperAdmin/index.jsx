@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getPlatformModules, getPlatformCompanies, createPlatformCompany, updatePlatformCompany, getPlatformCompanyUsers, createPlatformCompanyUser, resetUserPassword } from '../../api/client';
+import { getPlatformModules, getPlatformCompanies, createPlatformCompany, updatePlatformCompany, getPlatformCompanyUsers, createPlatformCompanyUser, resetUserPassword, deletePlatformCompany } from '../../api/client';
 import { useTranslation } from '../../contexts/TranslationContext';
 
 export default function SuperAdmin() {
@@ -20,6 +20,7 @@ export default function SuperAdmin() {
   const [form, setForm] = useState({
     name: '', code: '', subdomain: '', owner_email: '', owner_name: '', owner_password: '', base_currency: 'USD', activity_type: 'trading', modules: [], max_users: 10
   });
+  const [deleteConfirm, setDeleteConfirm] = useState({});
 
   useEffect(() => {
     fetchData();
@@ -119,6 +120,18 @@ export default function SuperAdmin() {
       setPasswordReset(prev => ({ ...prev, [userId]: '' }));
       alert('Password reset');
     } catch (err) { alert(err.response?.data?.detail || 'Error resetting password'); }
+  };
+
+  const handleDeleteCompany = async (company) => {
+    const code = deleteConfirm[company.id];
+    if (!code || code !== company.code) { alert(`Type the company code "${company.code}" to confirm.`); return; }
+    if (!window.confirm(`This will permanently delete ALL data for "${company.name}" (${company.code}). This cannot be undone.`)) return;
+    try {
+      await deletePlatformCompany(company.id, code);
+      setDeleteConfirm(prev => { const n = { ...prev }; delete n[company.id]; return n; });
+      fetchData();
+      alert('Company deleted');
+    } catch (err) { alert(err.response?.data?.detail || 'Error deleting company'); }
   };
 
   const renderCompanyForm = (c, title, submitLabel, mForm, onModuleChange) => (
@@ -255,6 +268,22 @@ export default function SuperAdmin() {
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button className="btn" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => startEdit(c)}>Edit</button>
                           <button className="btn" style={{ background: 'rgba(255,255,255,0.08)', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => { setTab('users'); loadUsers(c); }}>Users</button>
+                        </div>
+                        <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            placeholder={`Type "${c.code}" to delete`}
+                            value={deleteConfirm[c.id] || ''}
+                            onChange={e => setDeleteConfirm(prev => ({ ...prev, [c.id]: e.target.value }))}
+                            style={{ flex: 1, fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', color: 'var(--danger)' }}
+                          />
+                          <button
+                            className="btn"
+                            style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', padding: '0.25rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                            onClick={() => handleDeleteCompany(c)}
+                          >
+                            🗑️ Delete
+                          </button>
                         </div>
                       </td>
                     </tr>

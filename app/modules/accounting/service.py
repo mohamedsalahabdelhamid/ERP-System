@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.accounting.models import Account, JournalEntry, JournalLine
 from app.modules.accounting.schemas import AccountCreate, JournalEntryCreate, JournalEntryRead
 
@@ -65,6 +66,15 @@ def _validate_journal_lines(db: Session, company_id: int, lines) -> None:
         )
 
 
+def journal_entry_reference_exists(
+    db: Session, company_id: int, reference: str
+) -> bool:
+    stmt = select(JournalEntry.id).where(
+        JournalEntry.company_id == company_id, JournalEntry.reference == reference
+    ).limit(1)
+    return db.scalar(stmt) is not None
+
+
 def create_journal_entry(
     db: Session, company_id: int, data: JournalEntryCreate, commit: bool = True
 ) -> JournalEntryRead:
@@ -76,7 +86,12 @@ def create_journal_entry(
     writes (stock, movements, accounting, flags) are atomic.
     """
     _validate_journal_lines(db, company_id, data.lines)
-    entry = JournalEntry(company_id=company_id, reference=data.reference, entry_date=data.entry_date, notes=data.notes)
+    reference = data.reference
+    if not reference:
+        reference = generate_code(
+            db, company_id, "journal_entry", "JE", JournalEntry, "reference"
+        )
+    entry = JournalEntry(company_id=company_id, reference=reference, entry_date=data.entry_date, notes=data.notes)
     db.add(entry)
     db.flush()
 

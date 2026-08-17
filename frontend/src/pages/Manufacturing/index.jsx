@@ -101,7 +101,7 @@ export default function Manufacturing() {
               <h3 style={{ marginBottom: '1.5rem' }}>{t('manufacturing.new_work_order')}</h3>
               <form onSubmit={handleCreateWO}>
                 <div className="form-grid">
-                  <div className="form-group"><label>{t('manufacturing.wo_number')}</label><input value={woForm.number} onChange={e => setWoForm({...woForm, number: e.target.value})} required placeholder="WO-2026-001" /></div>
+                  <div className="form-group"><label>{t('manufacturing.wo_number')}</label><input value={woForm.number} onChange={e => setWoForm({...woForm, number: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
                   <div className="form-group">
                     <label>{t('manufacturing.product')}</label>
                     <select value={woForm.item_id} onChange={e => setWoForm({...woForm, item_id: e.target.value})} required>

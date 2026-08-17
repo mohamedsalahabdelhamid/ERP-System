@@ -12,6 +12,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.inventory.models import (
     InventoryMovement,
     StockTake,
@@ -60,7 +61,12 @@ def warehouse_code_exists(
 def create_warehouse(
     db: Session, company_id: int, data: WarehouseCreate
 ) -> Warehouse:
-    warehouse = Warehouse(company_id=company_id, **data.model_dump())
+    values = data.model_dump()
+    if not values.get("code"):
+        values["code"] = generate_code(
+            db, company_id, "warehouse", "WH", Warehouse, "code"
+        )
+    warehouse = Warehouse(company_id=company_id, **values)
     db.add(warehouse)
     db.commit()
     db.refresh(warehouse)
@@ -124,6 +130,17 @@ def get_stock_take(
     return db.scalar(stmt)
 
 
+def stock_take_reference_exists(
+    db: Session, company_id: int, reference: str, exclude_id: Optional[int] = None
+) -> bool:
+    stmt = select(StockTake.id).where(
+        StockTake.company_id == company_id, StockTake.reference == reference
+    )
+    if exclude_id is not None:
+        stmt = stmt.where(StockTake.id != exclude_id)
+    return db.scalar(stmt.limit(1)) is not None
+
+
 def create_stock_take(
     db: Session, company_id: int, user_id: int, data: StockTakeCreate
 ) -> StockTake:
@@ -131,13 +148,19 @@ def create_stock_take(
     if warehouse is None:
         raise ValueError("warehouse_id not found in this company.")
 
+    values = data.model_dump()
+    if not values.get("reference"):
+        values["reference"] = generate_code(
+            db, company_id, "stock_take", "ST", StockTake, "reference"
+        )
+
     stock_take = StockTake(
         company_id=company_id,
-        warehouse_id=data.warehouse_id,
-        reference=data.reference,
+        warehouse_id=values["warehouse_id"],
+        reference=values["reference"],
         status="draft",
         created_by=user_id,
-        note=data.note,
+        note=values.get("note"),
     )
     db.add(stock_take)
     db.flush()

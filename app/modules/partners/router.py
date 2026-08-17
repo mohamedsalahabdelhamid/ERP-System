@@ -52,7 +52,7 @@ def create_partner(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> Partner:
-    if service.code_exists(db, company_id, data.code):
+    if data.code and service.code_exists(db, company_id, data.code):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Partner code '{data.code}' already exists in this company.",
@@ -98,7 +98,7 @@ def update_partner(
 @router.delete(
     "/{partner_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("partners.manage"))],
+    dependencies=[Depends(require_permission("partners.delete"))],
 )
 def delete_partner(
     partner_id: int,

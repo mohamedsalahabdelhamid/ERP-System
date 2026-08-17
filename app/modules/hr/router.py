@@ -25,6 +25,7 @@ from app.modules.hr.service import (
     create_department,
     create_employee,
     create_leave_request,
+    employee_number_exists,
     list_departments,
     list_employees,
     list_leave_requests,
@@ -56,6 +57,11 @@ def list_employees_ep(company_id: int = Depends(get_current_company_id), db: Ses
 
 @router.post("/employees", response_model=EmployeeRead, status_code=201, dependencies=[Depends(require_permission("hr.manage"))])
 def create_employee_ep(data: EmployeeCreate, company_id: int = Depends(get_current_company_id), db: Session = Depends(get_db)):
+    if data.employee_number and employee_number_exists(db, company_id, data.employee_number):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Employee number '{data.employee_number}' already exists in this company.",
+        )
     return create_employee(db, company_id, data)
 
 

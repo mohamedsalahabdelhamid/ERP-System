@@ -9,8 +9,16 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.partners.models import Partner
 from app.modules.partners.schemas import PartnerCreate, PartnerUpdate
+
+# (kind, prefix) per partner type; matches the seeded CUS-### / SUP-### style.
+_PARTNER_SEQ = {
+    "customer": ("partner_customer", "CUS"),
+    "supplier": ("partner_supplier", "SUP"),
+    "both": ("partner_both", "PTN"),
+}
 
 
 def list_partners(db: Session, company_id: int) -> list[Partner]:
@@ -41,7 +49,13 @@ def code_exists(
 
 
 def create_partner(db: Session, company_id: int, data: PartnerCreate) -> Partner:
-    partner = Partner(company_id=company_id, **data.model_dump())
+    values = data.model_dump()
+    if not values.get("code"):
+        kind, prefix = _PARTNER_SEQ[values["type"]]
+        values["code"] = generate_code(
+            db, company_id, kind, prefix, Partner, "code"
+        )
+    partner = Partner(company_id=company_id, **values)
     db.add(partner)
     db.commit()
     db.refresh(partner)

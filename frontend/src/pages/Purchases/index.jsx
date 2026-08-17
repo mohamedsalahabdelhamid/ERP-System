@@ -71,7 +71,7 @@ export default function Purchases() {
           <h3 style={{ marginBottom: '1.5rem' }}>{t('purchases.new_invoice')}</h3>
           <form onSubmit={handleCreate}>
             <div className="form-grid">
-              <div className="form-group"><label>{t('purchases.invoice_no')}</label><input value={form.number} onChange={e => setForm({...form, number: e.target.value})} required /></div>
+              <div className="form-group"><label>{t('purchases.invoice_no')}</label><input value={form.number} onChange={e => setForm({...form, number: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
               <div className="form-group"><label>{t('purchases.date')}</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required /></div>
               <div className="form-group">
                 <label>{t('purchases.supplier')}</label>

@@ -54,7 +54,7 @@ def create_invoice(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> PurchaseInvoice:
-    if service.invoice_number_exists(db, company_id, data.number):
+    if data.number and service.invoice_number_exists(db, company_id, data.number):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Purchase invoice number '{data.number}' already exists in this company.",
@@ -123,7 +123,7 @@ def confirm_invoice(
 @router.delete(
     "/{invoice_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("purchases.manage"))],
+    dependencies=[Depends(require_permission("purchases.delete"))],
 )
 def delete_invoice(
     invoice_id: int,

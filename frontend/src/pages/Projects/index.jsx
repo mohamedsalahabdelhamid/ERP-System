@@ -57,7 +57,7 @@ export default function Projects() {
           <h3 style={{ marginBottom: '1.5rem' }}>{t('projects.new_project')}</h3>
           <form onSubmit={handleCreate}>
             <div className="form-grid">
-              <div className="form-group"><label>{t('projects.project_code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
+              <div className="form-group"><label>{t('projects.project_code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
               <div className="form-group"><label>{t('projects.project_name')}</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
               <div className="form-group">
                 <label>{t('projects.client')}</label>

@@ -20,6 +20,7 @@ from app.modules.companies import service as company_service
 from app.modules.companies.models import Branch, Company, CompanySettings
 from app.modules.companies.schemas import BranchCreate, BranchRead, CompanyRead, CompanySettingsRead, CompanySettingsUpdate
 from app.modules.rbac.dependencies import require_permission
+from app.modules.rbac.schemas import ClearDataRequest
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/companies", tags=["companies"])
@@ -61,6 +62,11 @@ def create_branch(
     if db.get(Company, company_id) is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Company not found."
+        )
+    if data.code and company_service.branch_code_exists(db, company_id, data.code):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Branch code '{data.code}' already exists in this company.",
         )
     branch = company_service.create_branch(db, company_id, data)
     session.current_company_id = company_id
@@ -128,3 +134,30 @@ def update_company_settings(
     db.commit()
     db.refresh(settings)
     return settings
+
+
+# ---------------------------------------------------------------------------
+# Danger Zone: clear all operational data
+# ---------------------------------------------------------------------------
+
+@router.post(
+    "/current/danger/clear-data",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_permission("companies.delete_data"))],
+)
+def clear_company_data(
+    data: ClearDataRequest,
+    company_id: int = Depends(get_current_company_id),
+    db: Session = Depends(get_db),
+) -> dict:
+    company = db.get(Company, company_id)
+    if company is None:
+        raise HTTPException(status_code=404, detail="Company not found.")
+    if data.confirm != company.code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation code does not match the company code.",
+        )
+    company_service.clear_company_data(db, company_id)
+    db.commit()
+    return {"detail": "All operational data has been cleared."}

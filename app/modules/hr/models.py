@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, Date, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base_class import Base
 from app.db.mixins import TimestampMixin
@@ -15,6 +15,11 @@ class Department(TimestampMixin, Base):
 
 class Employee(TimestampMixin, Base):
     __tablename__ = "employees"
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id", "employee_number", name="uq_employees_company_number"
+        ),
+    )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True)
     department_id: Mapped[Optional[int]] = mapped_column(ForeignKey("departments.id", ondelete="SET NULL"), nullable=True)

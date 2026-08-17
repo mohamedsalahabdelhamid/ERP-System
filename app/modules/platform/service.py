@@ -399,3 +399,30 @@ def change_user_password(
     user.password_hash = hash_password(new_password)
     db.add(user)
     db.commit()
+
+
+def delete_company(db: Session, company_id: int, confirm_code: str) -> None:
+    """Delete an entire tenant company and all its data.
+
+    The caller must pass confirm_code matching the company's code to prevent
+    accidental deletion. All company-scoped rows are removed. Users (global
+    identities) are not deleted; only their UserRole links to this company are
+    removed.
+    """
+    company = db.get(Company, company_id)
+    if company is None:
+        raise PlatformError("Company not found.")
+    if confirm_code != company.code:
+        raise PlatformError("Confirmation code does not match the company code.")
+
+    # Enable FK cascades on SQLite so parent deletion cleans children.
+    if db.bind.dialect.name == "sqlite":
+        from sqlalchemy import text as _text
+        db.execute(_text("PRAGMA foreign_keys=ON"))
+
+    # The Company model has relationship cascade="all, delete-orphan" on
+    # branches and settings, and every FK to companies is ON DELETE CASCADE.
+    # A single delete of the Company row cascades everything in Postgres and
+    # in SQLite with FK enabled.
+    db.delete(company)
+    db.flush()

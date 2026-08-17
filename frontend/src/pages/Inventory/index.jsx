@@ -129,7 +129,7 @@ export default function Inventory() {
               <form onSubmit={handleSaveWarehouse}>
                 <div className="form-grid">
                   <div className="form-group"><label>{t('inventory.name')}</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
-                  <div className="form-group"><label>{t('inventory.code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('inventory.code')}</label><input value={form.code} onChange={e => setForm({...form, code: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                   <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? t('common.saving') : t('inventory.save_warehouse')}</button>

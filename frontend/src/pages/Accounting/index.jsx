@@ -141,7 +141,7 @@ export default function Accounting() {
               <h3 style={{ marginBottom: '1.5rem' }}>{t('accounting.new_entry_title')}</h3>
               <form onSubmit={handleCreateEntry}>
                 <div className="form-grid">
-                  <div className="form-group"><label>{t('accounting.reference')}</label><input value={entryForm.reference} onChange={e => setEntryForm({...entryForm, reference: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('accounting.reference')}</label><input value={entryForm.reference} onChange={e => setEntryForm({...entryForm, reference: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
                   <div className="form-group"><label>{t('accounting.date')}</label><input type="date" value={entryForm.entry_date} onChange={e => setEntryForm({...entryForm, entry_date: e.target.value})} /></div>
                   <div className="form-group" style={{ gridColumn: '1/-1' }}><label>{t('accounting.notes')}</label><input value={entryForm.notes} onChange={e => setEntryForm({...entryForm, notes: e.target.value})} /></div>
                 </div>

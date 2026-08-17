@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.accounting.schemas import JournalEntryCreate, JournalLineCreate
 from app.modules.accounting.service import (
     create_journal_entry,
@@ -49,10 +50,23 @@ def _invoice_rate(
     return 1.0, None
 
 
+def payment_reference_exists(db: Session, company_id: int, reference: str) -> bool:
+    stmt = select(Payment.id).where(
+        Payment.company_id == company_id, Payment.reference == reference
+    ).limit(1)
+    return db.scalar(stmt) is not None
+
+
 def create_payment(db: Session, company_id: int, data: PaymentCreate) -> Payment:
     partner = get_partner(db, company_id, data.partner_id)
     if partner is None:
         raise ValueError("partner_id not found in this company.")
+
+    reference = data.reference
+    if not reference:
+        reference = generate_code(
+            db, company_id, "payment", "PAY", Payment, "reference"
+        )
 
     invoice_rate, kind = _invoice_rate(
         db, company_id, data.document_type, data.document_id
@@ -75,7 +89,7 @@ def create_payment(db: Session, company_id: int, data: PaymentCreate) -> Payment
     payment = Payment(
         company_id=company_id,
         partner_id=data.partner_id,
-        reference=data.reference,
+        reference=reference,
         document_type=data.document_type,
         document_id=data.document_id,
         payment_date=data.payment_date,

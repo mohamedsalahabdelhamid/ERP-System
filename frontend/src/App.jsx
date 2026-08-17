@@ -19,6 +19,7 @@ import Currencies from './pages/Currencies';
 import StockTakes from './pages/Inventory/StockTakes';
 import SuperAdmin from './pages/SuperAdmin';
 import CompanySettings from './pages/CompanySettings';
+import Roles from './pages/Roles';
 import { getMe, logout } from './api/client';
 import { useTranslation } from './contexts/TranslationContext';
 import './index.css';
@@ -41,6 +42,10 @@ const getNavConfig = (t) => [
    { to: '/payments', label: t('common.payments'), icon: '💳' },
    { to: '/reports', label: t('common.reports'), icon: '📊' },
    { to: '/currencies', label: t('common.currencies'), icon: '💱' },
+  ]},
+  { section: 'HR', items: [
+   { to: '/hr', label: t('common.hr'), icon: '👥' },
+   { to: '/leave-requests', label: t('common.leave_requests'), icon: '📅' },
   ]},
   { section: 'Master Data', items: [
    { to: '/items', label: t('common.items_products'), icon: '🏷️' },
@@ -113,10 +118,12 @@ export default function App() {
     if (path === '/projects') return t('common.projects');
     if (path === '/superadmin') return t('common.superadmin');
     if (path === '/company-settings') return t('common.settings');
+    if (path === '/roles') return t('common.roles');
     return 'ERP System';
   };
 
   const isSuperUser = currentUser?.is_superuser === true;
+  const hasRolesPermission = currentUser?.permissions?.includes('roles.manage');
 
   if (!isLoggedIn) return <Login onLogin={handleLogin} />;
 
@@ -152,6 +159,11 @@ export default function App() {
             <NavLink to="/company-settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <span className="nav-icon">🏢</span> {t('common.settings')}
             </NavLink>
+            {hasRolesPermission && (
+              <NavLink to="/roles" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                <span className="nav-icon">🔐</span> {t('common.roles')}
+              </NavLink>
+            )}
           </nav>
         </div>
         {/* SuperAdmin only */}
@@ -220,6 +232,7 @@ export default function App() {
           <Route path="/leave-requests" element={<LeaveRequests />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/company-settings" element={<CompanySettings />} />
+          <Route path="/roles" element={<Roles />} />
           {/* SuperAdmin routes: redirect non-superusers to home */}
           <Route path="/superadmin" element={isSuperUser ? <SuperAdmin /> : <Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

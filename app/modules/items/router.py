@@ -70,7 +70,7 @@ def create_category(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> ItemCategory:
-    if service.category_code_exists(db, company_id, data.code):
+    if data.code and service.category_code_exists(db, company_id, data.code):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Category code '{data.code}' already exists in this company.",
@@ -123,7 +123,7 @@ def update_category(
 @categories_router.delete(
     "/{category_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("categories.manage"))],
+    dependencies=[Depends(require_permission("categories.delete"))],
 )
 def delete_category(
     category_id: int,
@@ -167,7 +167,7 @@ def create_unit(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> Unit:
-    if service.unit_code_exists(db, company_id, data.code):
+    if data.code and service.unit_code_exists(db, company_id, data.code):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Unit code '{data.code}' already exists in this company.",
@@ -213,7 +213,7 @@ def update_unit(
 @units_router.delete(
     "/{unit_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("units.manage"))],
+    dependencies=[Depends(require_permission("units.delete"))],
 )
 def delete_unit(
     unit_id: int,
@@ -323,7 +323,7 @@ def update_conversion(
 @conversions_router.delete(
     "/{conversion_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("unit_conversions.manage"))],
+    dependencies=[Depends(require_permission("unit_conversions.delete"))],
 )
 def delete_conversion(
     conversion_id: int,
@@ -367,7 +367,7 @@ def create_item(
     company_id: int = Depends(get_current_company_id),
     db: Session = Depends(get_db),
 ) -> Item:
-    if service.item_code_exists(db, company_id, data.code):
+    if data.code and service.item_code_exists(db, company_id, data.code):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Item code '{data.code}' already exists in this company.",
@@ -425,7 +425,7 @@ def update_item(
 @items_router.delete(
     "/{item_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("items.manage"))],
+    dependencies=[Depends(require_permission("items.delete"))],
 )
 def delete_item(
     item_id: int,

@@ -87,7 +87,7 @@ export default function HR() {
               <form onSubmit={handleCreateEmployee}>
                 <div className="form-grid">
                   <div className="form-group"><label>{t('hr.full_name')}</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
-                  <div className="form-group"><label>{t('hr.employee_no')}</label><input value={form.employee_number} onChange={e => setForm({...form, employee_number: e.target.value})} required /></div>
+                  <div className="form-group"><label>{t('hr.employee_no')}</label><input value={form.employee_number} onChange={e => setForm({...form, employee_number: e.target.value})} placeholder={t('common.auto_code_hint')} /></div>
                   <div className="form-group"><label>{t('hr.position')}</label><input value={form.position} onChange={e => setForm({...form, position: e.target.value})} /></div>
                   <div className="form-group">
                     <label>{t('hr.department')}</label>

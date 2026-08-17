@@ -97,11 +97,31 @@ def me(
     db: Session = Depends(get_db),
 ) -> MeResponse:
     companies = company_service.get_user_companies(db, user.id)
+    permissions: list[str] = []
+    if session.current_company_id is not None:
+        from app.modules.rbac.service import get_user_permissions
+        permissions = sorted(get_user_permissions(db, user.id, session.current_company_id))
+    # Build a map of company_id -> branch_id from user_roles
+    from sqlalchemy import select as sa_select
+    from app.modules.rbac.models import UserRole
+    user_roles = db.scalars(
+        sa_select(UserRole).where(UserRole.user_id == user.id)
+    ).all()
+    branch_map = {ur.company_id: ur.branch_id for ur in user_roles if ur.branch_id is not None}
+    companies_data = []
+    for c in companies:
+        cr = CompanyRead.model_validate(c)
+        cr.branch_id = branch_map.get(c.id)
+        companies_data.append(cr)
     return MeResponse(
         user=UserRead.model_validate(user),
         scope=SessionScope(
             current_company_id=session.current_company_id,
             current_branch_id=session.current_branch_id,
         ),
-        companies=[CompanyRead.model_validate(c) for c in companies],
+        companies=companies_data,
+        is_superuser=user.is_superuser,
+        full_name=user.full_name,
+        email=user.email,
+        permissions=permissions,
     )

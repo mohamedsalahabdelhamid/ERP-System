@@ -27,7 +27,8 @@ class PurchaseInvoiceLineRead(BaseModel):
 
 class PurchaseInvoiceCreate(BaseModel):
     partner_id: int
-    number: str
+    # Optional: auto-generated per company when omitted (PINV-00001).
+    number: Optional[str] = None
     date: datetime
     currency_code: str
     fx_rate: float = 1

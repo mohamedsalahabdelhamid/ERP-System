@@ -3,7 +3,8 @@ from pydantic import BaseModel, Field
 
 
 class ProjectCreate(BaseModel):
-    code: str = Field(..., min_length=1)
+    # Optional: auto-generated per company when omitted (PRJ-###).
+    code: Optional[str] = None
     name: str = Field(..., min_length=1)
     partner_id: Optional[int] = None
     start_date: Optional[str] = None

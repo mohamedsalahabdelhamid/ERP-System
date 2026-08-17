@@ -10,7 +10,7 @@ from app.api.deps import (
 )
 from app.modules.manufacturing.models import BOM, BOMLine, WorkOrder
 from app.modules.manufacturing.schemas import BOMCreate, WorkOrderCreate, WorkOrderLaborCreate, WorkOrderOverheadCreate
-from app.modules.manufacturing.service import create_bom, create_work_order, finish_work_order
+from app.modules.manufacturing.service import create_bom, create_work_order, finish_work_order, work_order_number_exists
 
 router = APIRouter(
     prefix="/manufacturing",
@@ -65,6 +65,11 @@ def list_work_orders(company_id: int = Depends(get_current_company_id), db: Sess
 
 @router.post("/work-orders", status_code=201, dependencies=[Depends(require_permission("manufacturing.manage"))])
 def create_work_order_ep(data: WorkOrderCreate, company_id: int = Depends(get_current_company_id), db: Session = Depends(get_db)):
+    if data.number and work_order_number_exists(db, company_id, data.number):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Work order number '{data.number}' already exists in this company.",
+        )
     wo = create_work_order(db, company_id, data)
     return {"id": wo.id, "number": wo.number, "status": wo.status}
 

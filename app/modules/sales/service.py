@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.numbering import generate_code
 from app.modules.inventory.models import InventoryMovement, Warehouse, WarehouseStock
 from app.modules.items.service import get_item
 from app.modules.partners.service import get_partner
@@ -98,6 +99,10 @@ def create_invoice(
     compose this inside a single atomic transaction."""
     payload = data.model_dump()
     _validate_invoice_data(db, company_id, payload)
+    if not payload.get("number"):
+        payload["number"] = generate_code(
+            db, company_id, "sales_invoice", "SAL", SalesInvoice, "number", pad=5
+        )
     invoice = SalesInvoice(
         company_id=company_id,
         partner_id=payload["partner_id"],

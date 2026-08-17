@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base_class import Base
 from app.db.mixins import TimestampMixin
@@ -7,6 +7,9 @@ from app.db.mixins import TimestampMixin
 
 class Project(TimestampMixin, Base):
     __tablename__ = "projects"
+    __table_args__ = (
+        UniqueConstraint("company_id", "code", name="uq_projects_company_code"),
+    )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(50), nullable=False)

@@ -23,7 +23,7 @@ docker compose exec -T web python -m scripts.seed || true
 
 printf '\nERP is running.\n'
 printf 'Web UI (single entry point): http://localhost:9009/\n'
-printf 'API docs:                    http://localhost:9009/docs (via backend port 8000)\n'
+printf 'API docs:                    http://localhost:9009/api/v1/docs (via backend port 8000)\n'
 printf 'Health:                      http://localhost:9009/health\n'
 printf 'Seed login:                  admin@example.com / admin123\n'
 printf 'Backup:                      ./scripts/backup_db.sh\n'

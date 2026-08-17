@@ -8,6 +8,13 @@ real server deployment — nothing changes between them.
 
 Requirements: Docker with the Compose plugin.
 
+### Windows — double-click launchers
+1. `setup.bat` — one-time preparation (opens/installs Docker Desktop, creates
+   `.env` with random secrets, builds images, installs test requirements, runs
+   the test suite).
+2. `start.bat` — starts all services, seeds demo data, and opens the browser.
+
+### Linux / any server
 ```bash
 ./start.sh        # creates .env (first time), builds, starts, seeds
 ```
@@ -48,7 +55,8 @@ docker compose exec -T web alembic upgrade head
 docker compose exec -T web python -m scripts.seed
 
 # Full reseed: delete the demo company and recreate everything
-docker compose exec -T web python -m scripts.seed --reset
+# WARNING: requires --confirm-destroy to prevent accidental data loss
+docker compose exec -T web python -m scripts.seed --reset --confirm-destroy DEMO
 ```
 
 ## 3. Backup & restore
@@ -99,7 +107,83 @@ Configuration lives in `.env` (git-ignored). Reference: `.env.example`.
 
 ```bash
 # Requires a Python 3.12 venv with requirements.txt installed.
-python -m pytest -q        # 61 tests, uses in-memory SQLite only
+python -m pytest -q        # 110 tests, uses in-memory SQLite only
+```
+
+## 8. Permission system
+
+Every module has two permission tiers:
+
+| Permission | Meaning |
+|---|---|
+| `<module>.view` | Read-only access |
+| `<module>.manage` | Create, update, and other write operations |
+| `<module>.delete` | Explicit delete access (separate from manage) |
+
+Special permission: `companies.delete_data` — required to clear all operational
+data for a company via the danger zone.
+
+The `admin` and `owner` roles automatically receive all permissions on seed.
+To grant all permissions to a custom role:
+
+```python
+from app.modules.rbac.seed import grant_all_to_role
+grant_all_to_role(db, role)
+```
+
+### RBAC management API
+
+Manage roles and company users through the API (requires `roles.manage`):
+
+```
+GET    /api/v1/permissions              list all permission codes
+GET    /api/v1/roles                    list roles for the current company
+POST   /api/v1/roles                    create a role
+PATCH  /api/v1/roles/{id}/permissions   update a role's permissions
+DELETE /api/v1/roles/{id}               delete a role (must be empty, not Admin)
+GET    /api/v1/company-users            list users in the current company
+POST   /api/v1/company-users            invite/create a user
+PATCH  /api/v1/company-users/{id}/roles update a user's roles
+PATCH  /api/v1/company-users/{id}/status activate/deactivate a user
+```
+
+The `GET /api/v1/auth/me` response includes a `permissions: string[]` field
+listing all permission codes for the authenticated user in the selected company.
+
+## 9. Danger zone — clearing company data
+
+The company settings page includes a **Danger Zone** (gated by
+`companies.delete_data` permission) that permanently deletes all **operational**
+data for the company:
+
+- Invoices, invoice items, payments
+- Journal entries, journal entry lines
+- Stock transactions, warehouse stock, stock takes
+- Project tasks, manufacturing orders
+- POS sessions, HR records
+- Currency exchange rates
+
+**Preserved** (master data): users, roles, item categories, items, partners,
+employees, warehouses, accounts, account groups, currencies.
+
+Requires entering the company code to confirm. The endpoint is:
+
+```
+POST /api/v1/companies/current/danger/clear-data
+Body: { "confirm": "<COMPANY_CODE>" }
+```
+
+## 10. Platform — deleting a tenant
+
+Superusers can delete a company (tenant) from the platform management UI.
+This cascades to all branches, users, roles, and operational data via
+`ON DELETE CASCADE` foreign keys.
+
+Requires entering the company code to confirm. The endpoint is:
+
+```
+DELETE /api/v1/platform/companies/{id}
+Body: { "confirm_code": "<COMPANY_CODE>" }
 ```
 
 ## 7. Troubleshooting

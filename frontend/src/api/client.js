@@ -161,3 +161,23 @@ export const getPlatformCompanyUsers = (id) => api.get(`/platform/companies/${id
 export const createPlatformCompanyUser = (id, data) => api.post(`/platform/companies/${id}/users`, data);
 export const resetUserPassword = (userId, newPassword) =>
   api.post(`/platform/users/${userId}/password`, { new_password: newPassword });
+export const deletePlatformCompany = (id, confirmCode) =>
+  api.delete(`/platform/companies/${id}`, { data: { confirm_code: confirmCode } });
+
+// ---- RBAC (company-scoped) ----
+export const getPermissions = () => api.get('/permissions');
+export const getRoles = () => api.get('/roles');
+export const createRole = (data) => api.post('/roles', data);
+export const updateRolePermissions = (id, permissions) =>
+  api.patch(`/roles/${id}/permissions`, { permissions });
+export const deleteRole = (id) => api.delete(`/roles/${id}`);
+export const getCompanyUsers = () => api.get('/company-users');
+export const createCompanyUser = (data) => api.post('/company-users', data);
+export const updateCompanyUserRoles = (id, roleNames) =>
+  api.patch(`/company-users/${id}/roles`, { role_names: roleNames });
+export const updateCompanyUserStatus = (id, isActive) =>
+  api.patch(`/company-users/${id}/status`, { is_active: isActive });
+
+// ---- Danger Zone ----
+export const clearCompanyData = (confirmCode) =>
+  api.post('/companies/current/danger/clear-data', { confirm: confirmCode });

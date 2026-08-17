@@ -10,7 +10,8 @@ PartnerType = Literal["customer", "supplier", "both"]
 class PartnerCreate(BaseModel):
     type: PartnerType
     name: str
-    code: str
+    # Optional: auto-generated per company when omitted (CUS-### / SUP-###).
+    code: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None

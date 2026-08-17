@@ -69,3 +69,7 @@ class ModuleInfo(BaseModel):
     key: str
     label: str
     description: str
+
+
+class DeleteTenantRequest(BaseModel):
+    confirm_code: str = Field(min_length=1)

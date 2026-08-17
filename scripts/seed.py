@@ -15,7 +15,11 @@ Creates:
 
 Usage (inside the web container):
     python -m scripts.seed
-    python -m scripts.seed --reset   # drop existing demo company, reseed fresh
+    python -m scripts.seed --reset --confirm-destroy   # drop existing demo company, reseed fresh
+
+Destructive flags are double-guarded: ``--reset`` refuses to run without an
+explicit ``--confirm-destroy``. Normal startup (start.bat / start.sh / the
+entrypoint) never passes either flag, so booting the system can never delete data.
 """
 
 import argparse
@@ -35,7 +39,11 @@ from app.modules.inventory.models import Warehouse, WarehouseStock
 from app.modules.items.models import Item, ItemCategory, Unit
 from app.modules.partners.models import Partner
 from app.modules.rbac.models import Role, UserRole
-from app.modules.rbac.seed import grant_all_to_role, sync_permissions
+from app.modules.rbac.seed import (
+    grant_all_to_admin_roles,
+    grant_all_to_role,
+    sync_permissions,
+)
 from app.modules.users.models import User
 
 DEMO_COMPANY_CODE = "DEMO"
@@ -165,6 +173,9 @@ def seed(reset: bool = False) -> None:
             full_name="System Administrator",
             is_active=True,
         )
+        # The seeded admin is also the platform owner (superuser) so they can
+        # provision companies from the SuperAdmin panel.
+        user.is_superuser = True
         link = db.scalar(
             select(UserRole).where(
                 UserRole.user_id == user.id,
@@ -185,6 +196,9 @@ def seed(reset: bool = False) -> None:
         sync_permissions(db)
         db.flush()
         grant_all_to_role(db, role)
+        # Re-grant on every boot so every Admin role (old and new, across all
+        # companies) receives newly-added permission codes like *.delete.
+        grant_all_to_admin_roles(db)
 
         # --- Chart of accounts ---
         for code, name, atype in DEFAULT_ACCOUNTS:
@@ -288,5 +302,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed the ERP demo data.")
     parser.add_argument("--reset", action="store_true",
                         help="Remove the existing demo company before seeding.")
+    parser.add_argument("--confirm-destroy", action="store_true",
+                        help="Required together with --reset. Confirms you really "
+                             "want to permanently delete the existing demo company "
+                             "data before reseeding.")
     args = parser.parse_args()
+    if args.reset and not args.confirm_destroy:
+        parser.error(
+            "--reset permanently deletes the existing demo company data and "
+            "requires --confirm-destroy to proceed."
+        )
     seed(reset=args.reset)

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base_class import Base
@@ -37,6 +37,9 @@ class BOMLine(TimestampMixin, Base):
 
 class WorkOrder(TimestampMixin, Base):
     __tablename__ = "work_orders"
+    __table_args__ = (
+        UniqueConstraint("company_id", "number", name="uq_work_orders_company_number"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[int] = mapped_column(
