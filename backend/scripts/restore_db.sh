@@ -10,7 +10,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+# Repo root = two levels up (backend/scripts/ -> backend/ -> repo root),
+# where .env, backups/ and docker-compose.yml live.
+PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+BACKEND_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
 
 # shellcheck disable=SC1091

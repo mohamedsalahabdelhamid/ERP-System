@@ -1213,10 +1213,10 @@ def build_pdf3(path):
          "  --admin-email admin@yourcompany.com<br/>"
          "  --admin-password 'YourSecurePassword!'"),
         ("Step 6: Set Up Backups", "# Make backup script executable<br/>"
-         "chmod +x scripts/backup_db.sh<br/><br/>"
+         "chmod +x backend/scripts/backup_db.sh<br/><br/>"
          "# Add to crontab (daily at 2 AM)<br/>"
          "crontab -e<br/>"
-         "0 2 * * * cd /opt/erp && ./scripts/backup_db.sh >> backups/backup.log 2>&1"),
+         "0 2 * * * cd /opt/erp && ./backend/scripts/backup_db.sh >> backups/backup.log 2>&1"),
     ]
     for title, code in deploy_steps:
         st.append(Paragraph(title, s["h3"]))
@@ -1418,7 +1418,7 @@ def build_pdf3(path):
          "# Update .env<br/>"
          "POSTGRES_PASSWORD=&lt;new_password&gt;<br/><br/>"
          "# WARNING: This requires recreating the database<br/>"
-         "# Backup first: ./scripts/backup_db.sh<br/>"
+         "# Backup first: ./backend/scripts/backup_db.sh<br/>"
          "docker compose down -v<br/>"
          "docker compose up --build -d<br/>"
          "docker compose exec -T web python -m scripts.seed"),
@@ -1456,12 +1456,12 @@ def build_pdf3(path):
     st.append(Paragraph("Automated Backup", s["h2"]))
     st.append(Paragraph(
         "# Manual backup<br/>"
-        "./scripts/backup_db.sh<br/><br/>"
+        "./backend/scripts/backup_db.sh<br/><br/>"
         "# Automated daily backup (cron)<br/>"
         "crontab -e<br/>"
-        "0 2 * * * cd /opt/erp && ./scripts/backup_db.sh >> backups/backup.log 2>&1<br/><br/>"
+        "0 2 * * * cd /opt/erp && ./backend/scripts/backup_db.sh >> backups/backup.log 2>&1<br/><br/>"
         "# Backup to custom directory<br/>"
-        "./scripts/backup_db.sh /var/backups/erp",
+        "./backend/scripts/backup_db.sh /var/backups/erp",
         s["code"]))
     st.append(Paragraph(
         "Backups are stored as compressed SQL dumps in the backups/ directory. The script "
@@ -1471,7 +1471,7 @@ def build_pdf3(path):
     st.append(Paragraph("Restore Procedure", s["h2"]))
     st.append(Paragraph(
         "# WARNING: This drops the existing database<br/>"
-        "./scripts/restore_db.sh backups/erp_erp_20260810_120000.sql.gz<br/><br/>"
+        "./backend/scripts/restore_db.sh backups/erp_erp_20260810_120000.sql.gz<br/><br/>"
         "# Or manually<br/>"
         "gunzip -c backups/erp_erp_20260810_120000.sql.gz |<br/>"
         "  docker compose exec -T db psql -U erp -d erp",
@@ -2277,7 +2277,7 @@ def build_pdf4(path):
 # ===========================================================================
 
 def main():
-    output_dir = os.path.join(os.path.dirname(__file__), "..", "docs")
+    output_dir = os.path.join(os.path.dirname(__file__), "..", "..", "docs")
     os.makedirs(output_dir, exist_ok=True)
 
     which = sys.argv[1] if len(sys.argv) > 1 else "all"

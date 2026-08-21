@@ -10,9 +10,14 @@ engine created explicitly by the test suite, never this setting.
 """
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Repo root (backend/ parent) — the .env file lives there next to
+# docker-compose.yml so a single env file configures the whole stack.
+_REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _parse_cors(v: str | None) -> list[str]:
@@ -24,7 +29,7 @@ def _parse_cors(v: str | None) -> list[str]:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_REPO_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,

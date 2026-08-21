@@ -34,7 +34,7 @@ services:
 
   web:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file:

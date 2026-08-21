@@ -47,7 +47,9 @@ A multi-company, multi-branch ERP built with **FastAPI, PostgreSQL, Alembic, Red
 
 ## Testing
 ```bash
-python -m pytest -q
+cd backend
+python -m pytest -q     # unit + integration (110 tests)
+python -m pytest tests/test_e2e.py -v   # E2E (requires the Docker stack running)
 ```
 
 ## License

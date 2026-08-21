@@ -129,7 +129,7 @@ try {
                 Write-Info 'بيئة الاختبارات المحلية جاهزة مسبقًا (تم التخطي).' 'Local test environment already provisioned (skipped).'
             } else {
                 Write-Section 'تثبيت متطلبات الاختبارات (requirements.txt)' 'Installing test requirements (requirements.txt)'
-                & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+                & .\.venv\Scripts\python.exe -m pip install -r .\backend\requirements.txt
                 if ($LASTEXITCODE -ne 0) {
                     Write-Info 'تعذّر تثبيت بعض المتطلبات محليًا (غالبًا بسبب نسخة Python) — لن يمنع ذلك تشغيل البرنامج عبر Docker.' 'Some requirements could not be installed locally (likely a Python version issue) - the Docker-based app will still run.'
                 }
@@ -155,7 +155,9 @@ try {
         # --- Tests ---
         if ($py -and (Test-Path -LiteralPath '.venv\Scripts\python.exe')) {
             Write-Section 'تشغيل الاختبارات' 'Running the test suite'
-            & .\.venv\Scripts\python.exe -m pytest -q
+            Push-Location 'backend'
+            & ..\.venv\Scripts\python.exe -m pytest -q
+            Pop-Location
             if ($LASTEXITCODE -eq 0) {
                 Write-Host '[OK] كل الاختبارات ناجحة.' -ForegroundColor Green
             } else {

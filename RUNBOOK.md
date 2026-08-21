@@ -63,19 +63,19 @@ docker compose exec -T web python -m scripts.seed --reset --confirm-destroy DEMO
 
 ```bash
 # Backup (writes backups/erp_<db>_<timestamp>.sql.gz, keeps newest 14)
-./scripts/backup_db.sh
+./backend/scripts/backup_db.sh
 
 # Backup to a custom directory
-./scripts/backup_db.sh /var/backups/erp
+./backend/scripts/backup_db.sh /var/backups/erp
 
 # Restore (WARNING: drops the target database first)
-./scripts/restore_db.sh backups/erp_erp_20260810_120000.sql.gz
+./backend/scripts/restore_db.sh backups/erp_erp_20260810_120000.sql.gz
 ```
 
 Schedule backups with cron on the server:
 
 ```cron
-0 2 * * * cd /opt/erp && ./scripts/backup_db.sh >> backups/backup.log 2>&1
+0 2 * * * cd /opt/erp && ./backend/scripts/backup_db.sh >> backups/backup.log 2>&1
 ```
 
 ## 4. Configuration
@@ -106,7 +106,9 @@ Configuration lives in `.env` (git-ignored). Reference: `.env.example`.
 ## 6. Testing
 
 ```bash
-# Requires a Python 3.12 venv with requirements.txt installed.
+# Requires a Python 3.12 venv with backend/requirements.txt installed.
+# Run from the backend/ folder (tests import the app package from there).
+cd backend
 python -m pytest -q        # 110 tests, uses in-memory SQLite only
 ```
 

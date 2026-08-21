@@ -6,24 +6,34 @@ Full product spec & roadmap: see root `README.md` and the specification PDF.
 ## Project layout
 
 ```
-app/
-  main.py            # FastAPI app factory & entrypoint
-  core/
-    config.py        # settings (env-driven)
-    redis_client.py  # optional Redis helper
-  db/
-    base_class.py    # SQLAlchemy DeclarativeBase
-    base.py          # metadata registry for Alembic
-    session.py       # engine, SessionLocal, get_db, ping_db
-  api/
-    router.py        # aggregate API router (versioned)
-    health.py        # /health endpoint
-alembic/             # migrations (env + versions)
-docker/
-  entrypoint.sh      # wait-for-db + migrate + serve
-  nginx/nginx.conf   # reverse proxy
-Dockerfile
-docker-compose.yml   # web, db, nginx, redis
+backend/
+  app/
+    main.py            # FastAPI app factory & entrypoint
+    core/
+      config.py        # settings (env-driven)
+      redis_client.py  # optional Redis helper
+    db/
+      base_class.py    # SQLAlchemy DeclarativeBase
+      base.py          # metadata registry for Alembic
+      session.py       # engine, SessionLocal, get_db, ping_db
+    modules/           # one folder per domain module
+      auth/ companies/ sales/ purchases/ inventory/ items/ partners/
+      accounting/ payments/ currencies/ hr/ projects/ manufacturing/
+      pos/ reports/ rbac/ platform/ users/
+    api/
+      router.py        # aggregate API router (versioned)
+      health.py        # /health endpoint
+  alembic/             # migrations (env + versions)
+  alembic.ini
+  tests/               # pytest suite (run from backend/)
+  scripts/             # seed, docs generator, backup/restore
+  docker/
+    entrypoint.sh      # wait-for-db + migrate + serve
+  Dockerfile
+  requirements.txt
+frontend/              # React SPA (Vite), own Dockerfile
+docker-compose.yml     # web (FastAPI), db, redis, frontend
+.env / .env.example    # repo root — single env file for the whole stack
 ```
 
 ## Phase status
